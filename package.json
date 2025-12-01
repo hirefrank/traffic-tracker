@@ -7,8 +7,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create traffic-tracker",
-    "db:migrate": "wrangler d1 execute traffic-tracker --file=schema.sql",
-    "db:migrate:local": "wrangler d1 execute traffic-tracker --local --file=schema.sql"
+    "db:migrate": "wrangler d1 execute traffic-tracker --file=schema.sql --remote",
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",

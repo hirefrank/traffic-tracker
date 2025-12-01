@@ -1,6 +1,7 @@
 name = "traffic-tracker"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-09-15"
+account_id = "6034f1c5d23e5503f6573740480cf0d6"
 
 [triggers]
 crons = ["*/15 * * * *"]
@@ -11,8 +12,6 @@ database_name = "traffic-tracker"
 database_id = "54e9edee-507a-4171-ab4f-ab2f06a19d5c"
 
 [vars]
-ORIGIN = "<brooklyn-address>"
-DESTINATION = "<westport-address>"
 START_HOUR = "6"
 END_HOUR = "21"
 TIMEZONE = "America/New_York"
@@ -27,4 +26,11 @@ TIMEZONE = "America/New_York"
 #
 # 2. API Access Key (Bearer token for protected endpoints)
 #    wrangler secret put API_ACCESS_KEY
+#
+# 3. Origin address (e.g., "123 Main St, Brooklyn, NY")
+#    wrangler secret put ORIGIN
+#
+# 4. Destination address (e.g., "456 Oak Ave, Westport, CT")
+#    wrangler secret put DESTINATION
+#
 # =============================================================================
