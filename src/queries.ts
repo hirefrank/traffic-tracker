@@ -7,6 +7,7 @@ import type {
   HourlyData,
   IntervalData,
   DayHourData,
+  DayIntervalData,
   RouteData,
   RecentTrip,
   PairedMeasurement,
@@ -152,6 +153,37 @@ export async function getDayHourData(
     .prepare(query)
     .bind(...bindings)
     .all<DayHourData>();
+
+  return result.results ?? [];
+}
+
+/**
+ * Get day/30-minute interval breakdown
+ */
+export async function getDayIntervalData(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<DayIntervalData[]> {
+  const { clause, bindings } = buildWhereClause(filters);
+
+  const query = `
+    SELECT
+      day_of_week,
+      hour_local as hour,
+      (CAST(substr(measured_at_local, 15, 2) AS INTEGER) / 30) * 30 as minute,
+      direction,
+      ROUND(AVG(duration_in_traffic_seconds) / 60.0, 1) as avg_minutes,
+      COUNT(*) as sample_count
+    FROM trips
+    ${clause}
+    GROUP BY day_of_week, hour_local, minute, direction
+    ORDER BY day_of_week, hour_local, minute, direction
+  `;
+
+  const result = await db
+    .prepare(query)
+    .bind(...bindings)
+    .all<DayIntervalData>();
 
   return result.results ?? [];
 }

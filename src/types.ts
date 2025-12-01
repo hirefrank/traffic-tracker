@@ -112,6 +112,15 @@ export interface DayHourData {
   sample_count: number;
 }
 
+export interface DayIntervalData {
+  day_of_week: number;
+  hour: number;
+  minute: number;
+  direction: Direction;
+  avg_minutes: number;
+  sample_count: number;
+}
+
 export interface RouteData {
   route_summary: string;
   direction: Direction;
