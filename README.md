@@ -15,7 +15,40 @@ A Cloudflare Worker that collects travel time estimates between two locations us
 
 - [Node.js](https://nodejs.org/) (v18+)
 - [Cloudflare account](https://dash.cloudflare.com/sign-up)
-- [Google Maps API key](https://developers.google.com/maps/documentation/directions/get-api-key) with Directions API enabled
+- Google Maps API key with Directions API enabled (see [Google Maps Setup](#google-maps-setup) below)
+
+## Google Maps Setup
+
+### 1. Create a Google Cloud project
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Click the project dropdown and select **New Project**
+3. Name your project and click **Create**
+
+### 2. Enable the Directions API
+
+1. Go to **APIs & Services** → **Library**
+2. Search for "Directions API"
+3. Click on it and click **Enable**
+
+### 3. Create an API key
+
+1. Go to **APIs & Services** → **Credentials**
+2. Click **+ Create Credentials** → **API Key**
+3. Copy the generated key
+
+### 4. Restrict the API key (recommended)
+
+1. Click on the API key you just created
+2. Under **API restrictions**, select **Restrict key**
+3. Choose **Directions API** from the list
+4. Click **Save**
+
+### Pricing
+
+As of March 2025, Google Maps uses [free usage caps](https://developers.google.com/maps/billing-and-pricing/march-2025#free-usage-caps) instead of the previous $200 monthly credit. The Directions API is classified as a "Legacy" service.
+
+This worker makes ~4 API calls per hour (2 directions every 15 minutes) during a 15-hour collection window, totaling ~1,800 requests/month. Check the [Google Maps pricing page](https://developers.google.com/maps/billing-and-pricing/pricing) for current free tier limits and costs.
 
 ## Setup
 
@@ -57,6 +90,7 @@ Set the required secrets for your worker:
 npx wrangler secret put GOOGLE_MAPS_API_KEY
 
 # API access key (Bearer token for protected endpoints)
+# Generate a secure key with: openssl rand -base64 32
 npx wrangler secret put API_ACCESS_KEY
 
 # Origin address (e.g., "123 Main St, Brooklyn, NY 11201")

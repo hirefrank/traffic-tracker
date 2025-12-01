@@ -2,6 +2,15 @@ name = "traffic-tracker"
 main = "src/index.ts"
 compatibility_date = "2025-09-15"
 account_id = "6034f1c5d23e5503f6573740480cf0d6"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
+[[routes]]
+pattern = "hirefrank.com/traffic*"
+zone_name = "hirefrank.com"
 
 [triggers]
 crons = ["*/15 * * * *"]
