@@ -61,6 +61,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="refresh" content="900">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='12' width='24' height='12' rx='3' fill='%233b82f6'/><rect x='7' y='8' width='18' height='8' rx='2' fill='%233b82f6'/><circle cx='10' cy='24' r='3' fill='%231e3a5f'/><circle cx='22' cy='24' r='3' fill='%231e3a5f'/><rect x='9' y='10' width='6' height='4' rx='1' fill='%2393c5fd'/><rect x='17' y='10' width='6' height='4' rx='1' fill='%2393c5fd'/></svg>">
   <title>Traffic Tracker - ${originLabel} ↔ ${destLabel}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -319,8 +320,8 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
             <thead class="sticky top-0 bg-white">
               <tr class="text-xs text-slate-500 border-b border-slate-200">
                 <th class="text-left py-2 font-medium">Time (ET)</th>
-                <th class="text-right py-2 font-medium">${originShort} → ${destShort}</th>
-                <th class="text-right py-2 font-medium">${destShort} → ${originShort}</th>
+                <th class="text-right py-2 font-medium"><span class="hidden sm:inline">${originShort} </span>→ ${destShort}</th>
+                <th class="text-right py-2 font-medium"><span class="hidden sm:inline">${destShort} </span>→ ${originShort}</th>
               </tr>
             </thead>
             <tbody class="text-sm">
