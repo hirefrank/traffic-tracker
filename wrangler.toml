@@ -8,7 +8,7 @@ crons = ["*/15 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "traffic-tracker"
-database_id = "<your-database-id>"
+database_id = "54e9edee-507a-4171-ab4f-ab2f06a19d5c"
 
 [vars]
 ORIGIN = "<brooklyn-address>"
@@ -16,3 +16,15 @@ DESTINATION = "<westport-address>"
 START_HOUR = "6"
 END_HOUR = "21"
 TIMEZONE = "America/New_York"
+
+# =============================================================================
+# SECRETS (set via command line - do not commit actual values)
+# =============================================================================
+# Required secrets for this worker:
+#
+# 1. Google Maps API Key (for Directions API)
+#    wrangler secret put GOOGLE_MAPS_API_KEY
+#
+# 2. API Access Key (Bearer token for protected endpoints)
+#    wrangler secret put API_ACCESS_KEY
+# =============================================================================
