@@ -57,7 +57,7 @@ This worker makes ~4 API calls per hour (2 directions every 15 minutes) during a
 ```bash
 git clone https://github.com/hirefrank/traffic-tracker.git
 cd traffic-tracker
-npm install
+pnpm install
 ```
 
 ### 2. Create the D1 database
@@ -118,7 +118,7 @@ TIMEZONE = "America/New_York"
 ### 6. Deploy
 
 ```bash
-npm run deploy
+pnpm run deploy
 ```
 
 ## Usage
@@ -167,7 +167,7 @@ curl -H "Authorization: Bearer YOUR_KEY" \
 
 ```bash
 # Start local dev server
-npm run dev
+pnpm run dev
 ```
 
 Note: Local development requires setting up a local D1 database. For most use cases, deploying directly to Cloudflare is recommended.
@@ -258,7 +258,7 @@ TIMEZONE = "America/New_York" # Your timezone
 ### 6. Deploy
 
 ```bash
-npm run deploy
+pnpm run deploy
 ```
 
 ## License
