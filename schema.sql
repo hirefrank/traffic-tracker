@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS trips (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   measured_at TEXT NOT NULL,           -- ISO 8601 UTC timestamp
   measured_at_local TEXT NOT NULL,     -- ISO 8601 local (Eastern) timestamp
-  direction TEXT NOT NULL CHECK (direction IN ('bk_to_westport', 'westport_to_bk')),             -- 'bk_to_westport' | 'westport_to_bk'
+  direction TEXT NOT NULL CHECK (direction IN ('outbound', 'inbound')),             -- 'outbound' (origin→dest) | 'inbound' (dest→origin)
   duration_seconds INTEGER NOT NULL CHECK (duration_seconds > 0),   -- baseline (no traffic)
   duration_in_traffic_seconds INTEGER NOT NULL CHECK (duration_in_traffic_seconds > 0),
   distance_meters INTEGER CHECK (distance_meters IS NULL OR distance_meters > 0),
