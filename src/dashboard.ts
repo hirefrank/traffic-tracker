@@ -5,7 +5,7 @@
 import type { Env, QueryFilters } from './types';
 import {
   getTotalSamples,
-  getHourlyData,
+  getIntervalData,
   getDayHourData,
   getRecentPairedMeasurements,
   getBestWorstSlots,
@@ -42,9 +42,9 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   const destShort = destLabel.substring(0, 10);
 
   // Fetch all data
-  const [totalSamples, hourly, dayHour, recentPaired, bestWorst, dateRange] = await Promise.all([
+  const [totalSamples, intervalData, dayHour, recentPaired, bestWorst, dateRange] = await Promise.all([
     getTotalSamples(env.DB, filters),
-    getHourlyData(env.DB, filters),
+    getIntervalData(env.DB, filters),
     getDayHourData(env.DB, filters),
     getRecentPairedMeasurements(env.DB, filters),
     getBestWorstSlots(env.DB, filters),
@@ -52,7 +52,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   ]);
 
   // Prepare chart data
-  const hourlyChartData = JSON.stringify(hourly);
+  const intervalChartData = JSON.stringify(intervalData);
   const dayHourChartData = JSON.stringify(dayHour);
 
   return `<!DOCTYPE html>
@@ -60,6 +60,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="900">
   <title>Traffic Tracker - ${originLabel} ↔ ${destLabel}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -301,7 +302,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Hourly Average Chart -->
       <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">Average Duration by Hour</h3>
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Average Duration</h3>
         <div class="h-48 sm:h-64 lg:h-72" role="img" aria-label="Line chart showing average travel duration by hour of day">
           <canvas id="hourlyChart"></canvas>
         </div>
@@ -394,29 +395,47 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
   <script>
     // Data from server
-    const hourlyData = ${hourlyChartData};
+    const intervalData = ${intervalChartData};
     const dayHourData = ${dayHourChartData};
     const originLabel = '${originShort}';
     const destLabel = '${destShort}';
 
-    // Initialize hourly chart
-    function initHourlyChart() {
+    // Initialize interval chart (15-minute intervals)
+    function initIntervalChart() {
       const ctx = document.getElementById('hourlyChart').getContext('2d');
 
-      const hours = [...new Set(hourlyData.map(d => d.hour))].sort((a, b) => a - b);
-      const outboundData = hours.map(h => {
-        const item = hourlyData.find(d => d.hour === h && d.direction === 'outbound');
+      // Get unique time slots sorted by hour then minute
+      const timeSlots = [...new Set(intervalData.map(d => d.hour * 60 + d.minute))].sort((a, b) => a - b);
+
+      const outboundData = timeSlots.map(slot => {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        const item = intervalData.find(d => d.hour === hour && d.minute === minute && d.direction === 'outbound');
         return item ? item.avg_minutes : null;
       });
-      const inboundData = hours.map(h => {
-        const item = hourlyData.find(d => d.hour === h && d.direction === 'inbound');
+      const inboundData = timeSlots.map(slot => {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        const item = intervalData.find(d => d.hour === hour && d.minute === minute && d.direction === 'inbound');
         return item ? item.avg_minutes : null;
+      });
+
+      // Format time slot labels (show hour only at :00, otherwise just show time)
+      const labels = timeSlots.map(slot => {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        if (minute === 0) {
+          return formatHour(hour);
+        }
+        // For non-zero minutes, show shorter format
+        const h = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        return h + ':' + (minute < 10 ? '0' : '') + minute;
       });
 
       new Chart(ctx, {
         type: 'line',
         data: {
-          labels: hours.map(h => formatHour(h)),
+          labels: labels,
           datasets: [
             {
               label: originLabel + ' → ' + destLabel,
@@ -443,6 +462,14 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
             legend: { position: 'bottom' },
           },
           scales: {
+            x: {
+              ticks: {
+                maxRotation: 45,
+                minRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 12,
+              },
+            },
             y: {
               beginAtZero: false,
               title: { display: true, text: 'Minutes' },
@@ -636,7 +663,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', function() {
-      initHourlyChart();
+      initIntervalChart();
       initHeatmap('outbound');
       loadCurrentEstimate();
     });

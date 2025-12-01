@@ -96,6 +96,14 @@ export interface HourlyData {
   sample_count: number;
 }
 
+export interface IntervalData {
+  hour: number;
+  minute: number;
+  direction: Direction;
+  avg_minutes: number;
+  sample_count: number;
+}
+
 export interface DayHourData {
   day_of_week: number;
   hour: number;

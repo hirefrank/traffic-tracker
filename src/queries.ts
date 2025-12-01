@@ -5,6 +5,7 @@
 import type {
   QueryFilters,
   HourlyData,
+  IntervalData,
   DayHourData,
   RouteData,
   RecentTrip,
@@ -91,6 +92,36 @@ export async function getHourlyData(
     .prepare(query)
     .bind(...bindings)
     .all<HourlyData>();
+
+  return result.results ?? [];
+}
+
+/**
+ * Get 15-minute interval averages
+ */
+export async function getIntervalData(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<IntervalData[]> {
+  const { clause, bindings } = buildWhereClause(filters);
+
+  const query = `
+    SELECT
+      hour_local as hour,
+      (CAST(substr(measured_at_local, 15, 2) AS INTEGER) / 15) * 15 as minute,
+      direction,
+      ROUND(AVG(duration_in_traffic_seconds) / 60.0, 1) as avg_minutes,
+      COUNT(*) as sample_count
+    FROM trips
+    ${clause}
+    GROUP BY hour_local, minute, direction
+    ORDER BY hour_local, minute, direction
+  `;
+
+  const result = await db
+    .prepare(query)
+    .bind(...bindings)
+    .all<IntervalData>();
 
   return result.results ?? [];
 }
