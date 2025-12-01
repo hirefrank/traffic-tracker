@@ -10,14 +10,14 @@ Traffic Tracker is a Cloudflare Worker that collects travel time estimates betwe
 
 ```bash
 # Development
-npm run dev              # Start local dev server with wrangler
+pnpm run dev              # Start local dev server with wrangler
 
 # Deployment
-npm run deploy           # Deploy to Cloudflare Workers
+pnpm run deploy           # Deploy to Cloudflare Workers
 
 # Database
-npm run db:create        # Create D1 database (first time only)
-npm run db:migrate       # Run schema.sql on remote D1
+pnpm run db:create        # Create D1 database (first time only)
+pnpm run db:migrate       # Run schema.sql on remote D1
 ```
 
 ## Architecture
