@@ -277,6 +277,11 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
           : '<p class="text-gray-400 text-sm">No measurements yet</p>'
       }
     </div>
+
+    <!-- Footer -->
+    <footer class="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
+      <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700">View on GitHub</a>
+    </footer>
   </div>
 
   <script>
