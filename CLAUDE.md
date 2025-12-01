@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Traffic Tracker is a Cloudflare Worker that collects travel time estimates between Brooklyn, NY and Westport, CT using the Google Maps Directions API. It runs on a 15-minute cron schedule during configurable hours (default 6am-9pm ET) and provides a web dashboard for visualizing traffic patterns.
+Traffic Tracker is a Cloudflare Worker that collects travel time estimates between two configurable locations using the Google Maps Directions API. It runs on a 15-minute cron schedule during configurable hours (default 6am-9pm ET) and provides a web dashboard for visualizing traffic patterns.
 
 ## Commands
 
@@ -17,8 +17,7 @@ npm run deploy           # Deploy to Cloudflare Workers
 
 # Database
 npm run db:create        # Create D1 database (first time only)
-npm run db:migrate       # Run schema.sql on production D1
-npm run db:migrate:local # Run schema.sql on local D1
+npm run db:migrate       # Run schema.sql on remote D1
 ```
 
 ## Architecture
@@ -48,8 +47,9 @@ npm run db:migrate:local # Run schema.sql on local D1
 Secrets (set via `wrangler secret put`):
 - `GOOGLE_MAPS_API_KEY` - Google Maps Directions API key
 - `API_ACCESS_KEY` - Bearer token for protected API endpoints
+- `ORIGIN` / `DESTINATION` - Address strings for the route
+- `ORIGIN_LABEL` / `DESTINATION_LABEL` - Optional display labels for dashboard (defaults to "Origin"/"Destination")
 
 Variables (in wrangler.toml):
-- `ORIGIN` / `DESTINATION` - Address strings for the route
 - `START_HOUR` / `END_HOUR` - Collection window (local time)
 - `TIMEZONE` - Default: America/New_York

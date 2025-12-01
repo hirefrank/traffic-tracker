@@ -55,7 +55,7 @@ This worker makes ~4 API calls per hour (2 directions every 15 minutes) during a
 ### 1. Clone and install dependencies
 
 ```bash
-git clone https://github.com/yourusername/traffic-tracker.git
+git clone https://github.com/hirefrank/traffic-tracker.git
 cd traffic-tracker
 npm install
 ```
@@ -194,6 +194,72 @@ The worker runs every 15 minutes and:
 2. Fetches travel estimates from Google Maps for both directions
 3. Stores results in the `trips` table with metadata (day of week, hour, holiday flag)
 4. Logs collection status to `collection_log` table
+
+## Deploying Your Own Instance
+
+If you fork this repo to track your own route, you'll need to update the following:
+
+### 1. Update `wrangler.toml`
+
+Remove or replace these project-specific values:
+
+```toml
+# Remove this line (you'll set your own after creating the database)
+database_id = "..."
+
+# Remove this line (uses your default account, or set your own)
+account_id = "..."
+
+# Remove or update the routes section for your domain
+[[routes]]
+pattern = "yourdomain.com/traffic*"
+zone_name = "yourdomain.com"
+```
+
+### 2. Create your D1 database
+
+```bash
+npx wrangler d1 create traffic-tracker
+```
+
+Copy the new `database_id` into your `wrangler.toml`.
+
+### 3. Run the schema migration
+
+```bash
+npx wrangler d1 execute traffic-tracker --file=schema.sql --remote
+```
+
+### 4. Set your secrets
+
+```bash
+# Required
+npx wrangler secret put GOOGLE_MAPS_API_KEY
+npx wrangler secret put API_ACCESS_KEY        # Generate with: openssl rand -base64 32
+npx wrangler secret put ORIGIN                # Your starting address
+npx wrangler secret put DESTINATION           # Your ending address
+
+# Optional (for dashboard labels)
+npx wrangler secret put ORIGIN_LABEL          # e.g., "Home"
+npx wrangler secret put DESTINATION_LABEL     # e.g., "Office"
+```
+
+### 5. Customize collection window (optional)
+
+Edit the `[vars]` section in `wrangler.toml`:
+
+```toml
+[vars]
+START_HOUR = "6"              # Start collecting at 6am
+END_HOUR = "21"               # Stop at 9pm
+TIMEZONE = "America/New_York" # Your timezone
+```
+
+### 6. Deploy
+
+```bash
+npm run deploy
+```
 
 ## License
 

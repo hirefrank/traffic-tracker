@@ -25,21 +25,3 @@ START_HOUR = "6"
 END_HOUR = "21"
 TIMEZONE = "America/New_York"
 
-# =============================================================================
-# SECRETS (set via command line - do not commit actual values)
-# =============================================================================
-# Required secrets for this worker:
-#
-# 1. Google Maps API Key (for Directions API)
-#    wrangler secret put GOOGLE_MAPS_API_KEY
-#
-# 2. API Access Key (Bearer token for protected endpoints)
-#    wrangler secret put API_ACCESS_KEY
-#
-# 3. Origin address (e.g., "123 Main St, Brooklyn, NY")
-#    wrangler secret put ORIGIN
-#
-# 4. Destination address (e.g., "456 Oak Ave, Westport, CT")
-#    wrangler secret put DESTINATION
-#
-# =============================================================================
