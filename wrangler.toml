@@ -1,0 +1,18 @@
+name = "traffic-tracker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "traffic-tracker"
+database_id = "<your-database-id>"
+
+[vars]
+ORIGIN = "<brooklyn-address>"
+DESTINATION = "<westport-address>"
+START_HOUR = "6"
+END_HOUR = "21"
+TIMEZONE = "America/New_York"
