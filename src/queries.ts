@@ -12,42 +12,49 @@ import type {
   BestWorstSlot,
   HealthResponse,
   Trip,
-} from './types';
+} from "./types";
 
 /**
  * Build WHERE clause and bindings from filters
  */
-function buildWhereClause(filters: QueryFilters): { clause: string; bindings: unknown[] } {
+function buildWhereClause(filters: QueryFilters): {
+  clause: string;
+  bindings: unknown[];
+} {
   const conditions: string[] = [];
   const bindings: unknown[] = [];
 
   if (filters.startDate) {
-    conditions.push('measured_at_local >= ?');
+    conditions.push("measured_at_local >= ?");
     bindings.push(`${filters.startDate}T00:00:00`);
   }
 
   if (filters.endDate) {
-    conditions.push('measured_at_local <= ?');
+    conditions.push("measured_at_local <= ?");
     bindings.push(`${filters.endDate}T23:59:59`);
   }
 
   if (filters.direction) {
-    conditions.push('direction = ?');
+    conditions.push("direction = ?");
     bindings.push(filters.direction);
   }
 
   if (filters.excludeHolidays) {
-    conditions.push('is_holiday = 0');
+    conditions.push("is_holiday = 0");
   }
 
-  const clause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const clause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return { clause, bindings };
 }
 
 /**
  * Get total sample count
  */
-export async function getTotalSamples(db: D1Database, filters: QueryFilters): Promise<number> {
+export async function getTotalSamples(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<number> {
   const { clause, bindings } = buildWhereClause(filters);
   const query = `SELECT COUNT(*) as count FROM trips ${clause}`;
 
@@ -62,7 +69,10 @@ export async function getTotalSamples(db: D1Database, filters: QueryFilters): Pr
 /**
  * Get hourly averages
  */
-export async function getHourlyData(db: D1Database, filters: QueryFilters): Promise<HourlyData[]> {
+export async function getHourlyData(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<HourlyData[]> {
   const { clause, bindings } = buildWhereClause(filters);
 
   const query = `
@@ -88,7 +98,10 @@ export async function getHourlyData(db: D1Database, filters: QueryFilters): Prom
 /**
  * Get day/hour breakdown
  */
-export async function getDayHourData(db: D1Database, filters: QueryFilters): Promise<DayHourData[]> {
+export async function getDayHourData(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<DayHourData[]> {
   const { clause, bindings } = buildWhereClause(filters);
 
   const query = `
@@ -115,7 +128,10 @@ export async function getDayHourData(db: D1Database, filters: QueryFilters): Pro
 /**
  * Get route breakdown
  */
-export async function getRouteData(db: D1Database, filters: QueryFilters): Promise<RouteData[]> {
+export async function getRouteData(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<RouteData[]> {
   const { clause, bindings } = buildWhereClause(filters);
 
   const query = `
@@ -144,7 +160,7 @@ export async function getRouteData(db: D1Database, filters: QueryFilters): Promi
 export async function getRecentTrips(
   db: D1Database,
   filters: QueryFilters,
-  limit = 20
+  limit = 20,
 ): Promise<RecentTrip[]> {
   const { clause, bindings } = buildWhereClause(filters);
 
@@ -174,7 +190,7 @@ export async function getRecentTrips(
 export async function getRecentPairedMeasurements(
   db: D1Database,
   filters: QueryFilters,
-  limit = 5
+  limit = 6,
 ): Promise<PairedMeasurement[]> {
   // Build WHERE clause without direction filter for pairing
   const pairFilters = { ...filters, direction: null };
@@ -208,7 +224,7 @@ export async function getRecentPairedMeasurements(
 export async function getBestWorstSlots(
   db: D1Database,
   filters: QueryFilters,
-  minSamples = 5
+  minSamples = 5,
 ): Promise<{ best: BestWorstSlot[]; worst: BestWorstSlot[] }> {
   const { clause, bindings } = buildWhereClause(filters);
 
@@ -249,7 +265,10 @@ export async function getBestWorstSlots(
 /**
  * Get all trips for CSV export
  */
-export async function getAllTrips(db: D1Database, filters: QueryFilters): Promise<Trip[]> {
+export async function getAllTrips(
+  db: D1Database,
+  filters: QueryFilters,
+): Promise<Trip[]> {
   const { clause, bindings } = buildWhereClause(filters);
 
   const query = `
@@ -277,7 +296,7 @@ export async function getHealthStatus(db: D1Database): Promise<HealthResponse> {
       `SELECT timestamp FROM collection_log
        WHERE status = 'success'
        ORDER BY timestamp DESC
-       LIMIT 1`
+       LIMIT 1`,
     )
     .first<{ timestamp: string }>();
 
@@ -294,7 +313,7 @@ export async function getHealthStatus(db: D1Database): Promise<HealthResponse> {
       `SELECT error_message FROM collection_log
        WHERE status = 'error'
        ORDER BY timestamp DESC
-       LIMIT 1`
+       LIMIT 1`,
     )
     .first<{ error_message: string }>();
 
@@ -303,8 +322,8 @@ export async function getHealthStatus(db: D1Database): Promise<HealthResponse> {
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
   const isHealthy =
     !lastCollection || new Date(lastCollection.timestamp) > twoHoursAgo
-      ? 'healthy'
-      : 'unhealthy';
+      ? "healthy"
+      : "unhealthy";
 
   return {
     status: isHealthy,
@@ -317,13 +336,15 @@ export async function getHealthStatus(db: D1Database): Promise<HealthResponse> {
 /**
  * Get date range of available data
  */
-export async function getDateRange(db: D1Database): Promise<{ min: string | null; max: string | null }> {
+export async function getDateRange(
+  db: D1Database,
+): Promise<{ min: string | null; max: string | null }> {
   const result = await db
     .prepare(
       `SELECT
         MIN(date(measured_at_local)) as min_date,
         MAX(date(measured_at_local)) as max_date
-       FROM trips`
+       FROM trips`,
     )
     .first<{ min_date: string; max_date: string }>();
 

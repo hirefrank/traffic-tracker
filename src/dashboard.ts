@@ -7,7 +7,6 @@ import {
   getTotalSamples,
   getHourlyData,
   getDayHourData,
-  getRouteData,
   getRecentPairedMeasurements,
   getBestWorstSlots,
   getDateRange,
@@ -43,11 +42,10 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   const destShort = destLabel.substring(0, 10);
 
   // Fetch all data
-  const [totalSamples, hourly, dayHour, byRoute, recentPaired, bestWorst, dateRange] = await Promise.all([
+  const [totalSamples, hourly, dayHour, recentPaired, bestWorst, dateRange] = await Promise.all([
     getTotalSamples(env.DB, filters),
     getHourlyData(env.DB, filters),
     getDayHourData(env.DB, filters),
-    getRouteData(env.DB, filters),
     getRecentPairedMeasurements(env.DB, filters),
     getBestWorstSlots(env.DB, filters),
     getDateRange(env.DB),
@@ -56,7 +54,6 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   // Prepare chart data
   const hourlyChartData = JSON.stringify(hourly);
   const dayHourChartData = JSON.stringify(dayHour);
-  const routeChartData = JSON.stringify(byRoute);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -300,7 +297,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       </div>
     </div>
 
-    <!-- Charts -->
+    <!-- Charts and Recent -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Hourly Average Chart -->
       <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
@@ -310,12 +307,43 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         </div>
       </div>
 
-      <!-- Route Breakdown Chart -->
+      <!-- Recent Measurements -->
       <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">By Route</h3>
-        <div class="h-48 sm:h-64 lg:h-72" role="img" aria-label="Bar chart comparing travel times by route">
-          <canvas id="routeChart"></canvas>
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Recent Measurements</h3>
+        ${
+          recentPaired.length > 0
+            ? `
+        <div class="overflow-y-auto" style="max-height: 18rem;">
+          <table class="w-full">
+            <thead class="sticky top-0 bg-white">
+              <tr class="text-xs text-slate-500 border-b border-slate-200">
+                <th class="text-left py-2 font-medium">Time (ET)</th>
+                <th class="text-right py-2 font-medium">${originShort} → ${destShort}</th>
+                <th class="text-right py-2 font-medium">${destShort} → ${originShort}</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm">
+              ${recentPaired
+                .map(
+                  (m, i) => `
+                <tr class="border-b border-slate-100 animate-row hover:bg-slate-50/50 transition-colors" style="animation-delay: ${i * 30}ms">
+                  <td class="py-2 text-slate-600">${formatLocalTime(m.measured_at_local)}</td>
+                  <td class="py-2 text-right">
+                    <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
+                  </td>
+                  <td class="py-2 text-right">
+                    <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
+                  </td>
+                </tr>
+              `
+                )
+                .join('')}
+            </tbody>
+          </table>
         </div>
+        `
+            : '<p class="text-slate-500 text-sm">No measurements yet</p>'
+        }
       </div>
     </div>
 
@@ -353,73 +381,6 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       </div>
     </div>
 
-    <!-- Recent Measurements -->
-    <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
-      <h3 class="text-lg font-semibold text-slate-800 mb-3">Recent Measurements</h3>
-      ${
-        recentPaired.length > 0
-          ? `
-      <!-- Desktop table -->
-      <div class="hidden sm:block overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="text-xs text-slate-500 border-b border-slate-200">
-              <th class="text-left py-2 font-medium">Time (ET)</th>
-              <th class="text-right py-2 font-medium">${originShort} → ${destShort}</th>
-              <th class="text-right py-2 font-medium">${destShort} → ${originShort}</th>
-            </tr>
-          </thead>
-          <tbody class="text-sm">
-            ${recentPaired
-              .map(
-                (m, i) => `
-              <tr class="border-b border-slate-100 animate-row" style="animation-delay: ${i * 30}ms">
-                <td class="py-2 text-slate-600">${formatLocalTime(m.measured_at_local)}</td>
-                <td class="py-2 text-right">
-                  <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
-                  ${m.outbound_route ? `<span class="text-xs text-slate-500 ml-1.5">${m.outbound_route}</span>` : ''}
-                </td>
-                <td class="py-2 text-right">
-                  <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
-                  ${m.inbound_route ? `<span class="text-xs text-slate-500 ml-1.5">${m.inbound_route}</span>` : ''}
-                </td>
-              </tr>
-            `
-              )
-              .join('')}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Mobile cards -->
-      <div class="sm:hidden space-y-3">
-        ${recentPaired
-          .map(
-            (m, i) => `
-          <div class="bg-slate-50 rounded-lg p-3 animate-row" style="animation-delay: ${i * 30}ms">
-            <div class="text-sm font-medium text-slate-600 mb-2">${formatLocalTime(m.measured_at_local)}</div>
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span class="text-slate-500 text-xs block">${originShort} → ${destShort}</span>
-                <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
-                ${m.outbound_route ? `<span class="text-xs text-slate-500 ml-1">${m.outbound_route}</span>` : ''}
-              </div>
-              <div>
-                <span class="text-slate-500 text-xs block">${destShort} → ${originShort}</span>
-                <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
-                ${m.inbound_route ? `<span class="text-xs text-slate-500 ml-1">${m.inbound_route}</span>` : ''}
-              </div>
-            </div>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-      `
-          : '<p class="text-slate-500 text-sm">No measurements yet</p>'
-      }
-    </div>
-
     <!-- Footer -->
     <footer class="mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-500">
       ${totalSamples.toLocaleString()} measurements ${formatDateRange(dateRange.min, dateRange.max)} &middot;
@@ -435,7 +396,6 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     // Data from server
     const hourlyData = ${hourlyChartData};
     const dayHourData = ${dayHourChartData};
-    const routeData = ${routeChartData};
     const originLabel = '${originShort}';
     const destLabel = '${destShort}';
 
@@ -473,53 +433,6 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
               backgroundColor: 'rgba(16, 185, 129, 0.1)',
               tension: 0.3,
               fill: true,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' },
-          },
-          scales: {
-            y: {
-              beginAtZero: false,
-              title: { display: true, text: 'Minutes' },
-            },
-          },
-        },
-      });
-    }
-
-    // Initialize route chart
-    function initRouteChart() {
-      const ctx = document.getElementById('routeChart').getContext('2d');
-
-      const routes = [...new Set(routeData.map(d => d.route_summary))];
-      const outboundRouteData = routes.map(r => {
-        const item = routeData.find(d => d.route_summary === r && d.direction === 'outbound');
-        return item ? item.avg_minutes : 0;
-      });
-      const inboundRouteData = routes.map(r => {
-        const item = routeData.find(d => d.route_summary === r && d.direction === 'inbound');
-        return item ? item.avg_minutes : 0;
-      });
-
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: routes,
-          datasets: [
-            {
-              label: originLabel + ' → ' + destLabel,
-              data: outboundRouteData,
-              backgroundColor: '#3b82f6',
-            },
-            {
-              label: destLabel + ' → ' + originLabel,
-              data: inboundRouteData,
-              backgroundColor: '#10b981',
             },
           ],
         },
@@ -724,7 +637,6 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     // Initialize on load
     document.addEventListener('DOMContentLoaded', function() {
       initHourlyChart();
-      initRouteChart();
       initHeatmap('outbound');
       loadCurrentEstimate();
     });
