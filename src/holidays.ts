@@ -139,9 +139,6 @@ function formatDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// Cache for holiday dates by year
-const holidayCache = new Map<number, Set<string>>();
-
 /**
  * Check if a given date is a holiday or holiday-adjacent day
  * @param date - The date to check (in local timezone)
@@ -149,46 +146,7 @@ const holidayCache = new Map<number, Set<string>>();
  */
 export function isHoliday(date: Date): boolean {
   const year = date.getFullYear();
-
-  // Get or compute holiday dates for this year
-  let holidayDates = holidayCache.get(year);
-  if (!holidayDates) {
-    holidayDates = getAllHolidayDates(year);
-    holidayCache.set(year, holidayDates);
-  }
-
+  const holidayDates = getAllHolidayDates(year);
   const dateKey = formatDateKey(date);
   return holidayDates.has(dateKey);
-}
-
-/**
- * Check if a date string (YYYY-MM-DD) represents a holiday
- * @param dateStr - Date string in YYYY-MM-DD format
- * @returns true if the date is a holiday
- */
-export function isHolidayString(dateStr: string): boolean {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  return isHoliday(date);
-}
-
-/**
- * Get holiday name if date is a holiday, null otherwise
- */
-export function getHolidayName(date: Date): string | null {
-  const year = date.getFullYear();
-  const holidays = getFederalHolidays(year);
-  const dateKey = formatDateKey(date);
-
-  for (const holiday of holidays) {
-    if (formatDateKey(holiday.date) === dateKey) {
-      return holiday.name;
-    }
-    const observed = getObservedDate(holiday.date);
-    if (formatDateKey(observed) === dateKey) {
-      return `${holiday.name} (observed)`;
-    }
-  }
-
-  return null;
 }

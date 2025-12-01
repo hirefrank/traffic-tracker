@@ -20,8 +20,14 @@ import {
 export function parseFilters(url: URL): QueryFilters {
   const startDate = url.searchParams.get('startDate');
   const endDate = url.searchParams.get('endDate');
-  const direction = url.searchParams.get('direction') as Direction | null;
   const excludeHolidays = url.searchParams.get('excludeHolidays') === 'true';
+
+  // Validate direction parameter at runtime
+  const directionParam = url.searchParams.get('direction');
+  const direction: Direction | null =
+    directionParam === 'bk_to_westport' || directionParam === 'westport_to_bk'
+      ? directionParam
+      : null;
 
   return {
     startDate,
@@ -29,6 +35,18 @@ export function parseFilters(url: URL): QueryFilters {
     direction,
     excludeHolidays,
   };
+}
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 /**
@@ -41,7 +59,7 @@ export function verifyAuth(request: Request, apiAccessKey: string): boolean {
   const [type, token] = authHeader.split(' ');
   if (type !== 'Bearer') return false;
 
-  return token === apiAccessKey;
+  return timingSafeEqual(token, apiAccessKey);
 }
 
 /**
@@ -161,28 +179,51 @@ export async function handleApiHealth(env: Env): Promise<Response> {
 }
 
 /**
- * Handle /api/current endpoint - get live estimate
+ * Handle /api/current endpoint - get most recent estimates from database
  */
 export async function handleApiCurrent(env: Env): Promise<Response> {
-  const { fetchDirectionsWithRetry } = await import('./maps-api');
-
   try {
-    const [bkToWestport, westportToBk] = await Promise.all([
-      fetchDirectionsWithRetry(env.ORIGIN, env.DESTINATION, env.GOOGLE_MAPS_API_KEY),
-      fetchDirectionsWithRetry(env.DESTINATION, env.ORIGIN, env.GOOGLE_MAPS_API_KEY),
-    ]);
+    // Query most recent trip data for each direction (collected every 15 min)
+    const recent = await env.DB.prepare(`
+      SELECT direction, duration_in_traffic_seconds, route_summary, measured_at_local
+      FROM trips
+      WHERE measured_at >= datetime('now', '-30 minutes')
+      ORDER BY measured_at DESC
+    `).all<{
+      direction: string;
+      duration_in_traffic_seconds: number;
+      route_summary: string | null;
+      measured_at_local: string;
+    }>();
+
+    const bkToWestport = recent.results?.find(r => r.direction === 'bk_to_westport');
+    const westportToBk = recent.results?.find(r => r.direction === 'westport_to_bk');
+
+    if (!bkToWestport && !westportToBk) {
+      return new Response(
+        JSON.stringify({
+          error: 'No recent data available',
+          message: 'Traffic data is collected every 15 minutes. Please try again later.',
+        }),
+        {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({
         timestamp: new Date().toISOString(),
-        bk_to_westport: {
+        data_from: bkToWestport?.measured_at_local || westportToBk?.measured_at_local,
+        bk_to_westport: bkToWestport ? {
           duration_minutes: Math.round(bkToWestport.duration_in_traffic_seconds / 60),
           route: bkToWestport.route_summary,
-        },
-        westport_to_bk: {
+        } : null,
+        westport_to_bk: westportToBk ? {
           duration_minutes: Math.round(westportToBk.duration_in_traffic_seconds / 60),
           route: westportToBk.route_summary,
-        },
+        } : null,
       }),
       {
         headers: { 'Content-Type': 'application/json' },

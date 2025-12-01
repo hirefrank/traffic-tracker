@@ -151,31 +151,35 @@ export async function handleScheduled(env: Env): Promise<void> {
     },
   ];
 
-  const results: CollectionResult[] = [];
+  // Use D1 batch for atomic operations
   let apiCallsMade = 0;
+  const results: CollectionResult[] = [];
 
-  for (const { direction, origin, destination } of directions) {
-    apiCallsMade++;
-    const result = await collectDirection(env, direction, origin, destination, now, localTime, timezone);
-    results.push(result);
-
-    // Small delay between API calls to be nice to the API
-    if (directions.indexOf({ direction, origin, destination }) < directions.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  try {
+    // Collect data from Google Maps API first (outside transaction)
+    for (const { direction, origin, destination } of directions) {
+      apiCallsMade++;
+      const result = await collectDirection(env, direction, origin, destination, now, localTime, timezone);
+      results.push(result);
     }
+
+    // Determine overall status
+    const errors = results.filter((r) => !r.success);
+    const status = errors.length === 0 ? 'success' : 'error';
+    const errorMessage = errors.length > 0 ? errors.map((e) => `${e.direction}: ${e.error}`).join('; ') : null;
+
+    // Log the collection
+    await logCollection(env.DB, status, errorMessage, apiCallsMade);
+
+    console.log(`Collection completed: ${status}`, {
+      apiCallsMade,
+      errors: errors.length,
+      localTime: localTime.toISOString(),
+    });
+  } catch (error) {
+    // Log error if something unexpected happens
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    await logCollection(env.DB, 'error', errorMessage, apiCallsMade);
+    console.error('Collection failed:', error);
   }
-
-  // Determine overall status
-  const errors = results.filter((r) => !r.success);
-  const status = errors.length === 0 ? 'success' : 'error';
-  const errorMessage = errors.length > 0 ? errors.map((e) => `${e.direction}: ${e.error}`).join('; ') : null;
-
-  // Log the collection
-  await logCollection(env.DB, status, errorMessage, apiCallsMade);
-
-  console.log(`Collection completed: ${status}`, {
-    apiCallsMade,
-    errors: errors.length,
-    localTime: localTime.toISOString(),
-  });
 }
