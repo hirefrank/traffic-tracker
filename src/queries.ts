@@ -174,7 +174,7 @@ export async function getRecentTrips(
 export async function getRecentPairedMeasurements(
   db: D1Database,
   filters: QueryFilters,
-  limit = 15
+  limit = 5
 ): Promise<PairedMeasurement[]> {
   // Build WHERE clause without direction filter for pairing
   const pairFilters = { ...filters, direction: null };
