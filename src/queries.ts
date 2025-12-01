@@ -8,6 +8,7 @@ import type {
   DayHourData,
   RouteData,
   RecentTrip,
+  PairedMeasurement,
   BestWorstSlot,
   HealthResponse,
   Trip,
@@ -163,6 +164,40 @@ export async function getRecentTrips(
     .prepare(query)
     .bind(...bindings, limit)
     .all<RecentTrip>();
+
+  return result.results ?? [];
+}
+
+/**
+ * Get recent paired measurements (both directions per timestamp)
+ */
+export async function getRecentPairedMeasurements(
+  db: D1Database,
+  filters: QueryFilters,
+  limit = 15
+): Promise<PairedMeasurement[]> {
+  // Build WHERE clause without direction filter for pairing
+  const pairFilters = { ...filters, direction: null };
+  const { clause, bindings } = buildWhereClause(pairFilters);
+
+  const query = `
+    SELECT
+      substr(measured_at_local, 1, 16) as measured_at_local,
+      MAX(CASE WHEN direction = 'outbound' THEN duration_in_traffic_seconds END) as outbound_seconds,
+      MAX(CASE WHEN direction = 'inbound' THEN duration_in_traffic_seconds END) as inbound_seconds,
+      MAX(CASE WHEN direction = 'outbound' THEN route_summary END) as outbound_route,
+      MAX(CASE WHEN direction = 'inbound' THEN route_summary END) as inbound_route
+    FROM trips
+    ${clause}
+    GROUP BY substr(measured_at_local, 1, 16)
+    ORDER BY measured_at_local DESC
+    LIMIT ?
+  `;
+
+  const result = await db
+    .prepare(query)
+    .bind(...bindings, limit)
+    .all<PairedMeasurement>();
 
   return result.results ?? [];
 }

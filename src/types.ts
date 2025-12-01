@@ -118,6 +118,14 @@ export interface RecentTrip {
   route_summary: string | null;
 }
 
+export interface PairedMeasurement {
+  measured_at_local: string;
+  outbound_seconds: number | null;
+  inbound_seconds: number | null;
+  outbound_route: string | null;
+  inbound_route: string | null;
+}
+
 export interface BestWorstSlot {
   day_of_week: number;
   hour: number;

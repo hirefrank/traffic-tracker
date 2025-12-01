@@ -8,7 +8,7 @@ import {
   getHourlyData,
   getDayHourData,
   getRouteData,
-  getRecentTrips,
+  getRecentPairedMeasurements,
   getBestWorstSlots,
   getDateRange,
 } from './queries';
@@ -43,12 +43,12 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   const destShort = destLabel.substring(0, 10);
 
   // Fetch all data
-  const [totalSamples, hourly, dayHour, byRoute, recent, bestWorst, dateRange] = await Promise.all([
+  const [totalSamples, hourly, dayHour, byRoute, recentPaired, bestWorst, dateRange] = await Promise.all([
     getTotalSamples(env.DB, filters),
     getHourlyData(env.DB, filters),
     getDayHourData(env.DB, filters),
     getRouteData(env.DB, filters),
-    getRecentTrips(env.DB, filters),
+    getRecentPairedMeasurements(env.DB, filters),
     getBestWorstSlots(env.DB, filters),
     getDateRange(env.DB),
   ]);
@@ -189,14 +189,6 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <p class="text-sm text-gray-600">
-        <span class="font-medium">${totalSamples.toLocaleString()}</span> measurements collected
-        ${dateRange.min && dateRange.max ? ` from ${dateRange.min} to ${dateRange.max}` : ''}
-      </p>
-    </div>
-
     <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Hourly Average Chart -->
@@ -243,36 +235,38 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
     <!-- Recent Measurements Table -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-lg font-medium text-gray-800 mb-4">Recent Measurements</h3>
+      <h3 class="text-lg font-medium text-gray-800 mb-3">Recent Measurements</h3>
       ${
-        recent.length > 0
+        recentPaired.length > 0
           ? `
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time (ET)</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Direction</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Route</th>
+      <table class="w-full">
+        <thead>
+          <tr class="text-xs text-gray-500 border-b">
+            <th class="text-left py-2 font-medium">Time (ET)</th>
+            <th class="text-right py-2 font-medium">${originShort} → ${destShort}</th>
+            <th class="text-right py-2 font-medium">${destShort} → ${originShort}</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          ${recentPaired
+            .map(
+              (m) => `
+            <tr class="border-b border-gray-100">
+              <td class="py-1.5 text-gray-600">${formatLocalTime(m.measured_at_local)}</td>
+              <td class="py-1.5 text-right">
+                <span class="font-medium text-blue-600">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
+                ${m.outbound_route ? `<span class="text-xs text-gray-400 ml-1">${m.outbound_route}</span>` : ''}
+              </td>
+              <td class="py-1.5 text-right">
+                <span class="font-medium text-green-600">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
+                ${m.inbound_route ? `<span class="text-xs text-gray-400 ml-1">${m.inbound_route}</span>` : ''}
+              </td>
             </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            ${recent
-              .map(
-                (trip) => `
-              <tr class="hover:bg-gray-50">
-                <td class="px-4 py-2 text-sm text-gray-900">${formatLocalTime(trip.measured_at_local)}</td>
-                <td class="px-4 py-2 text-sm text-gray-600">${formatDirection(trip.direction, originShort, destShort)}</td>
-                <td class="px-4 py-2 text-sm font-medium">${formatDuration(trip.duration_in_traffic_seconds / 60)}</td>
-                <td class="px-4 py-2 text-sm text-gray-600">${trip.route_summary || '-'}</td>
-              </tr>
-            `
-              )
-              .join('')}
-          </tbody>
-        </table>
-      </div>
+          `
+            )
+            .join('')}
+        </tbody>
+      </table>
       `
           : '<p class="text-gray-400 text-sm">No measurements yet</p>'
       }
@@ -280,7 +274,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
     <!-- Footer -->
     <footer class="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
-      <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700">View on GitHub</a>
+      ${totalSamples.toLocaleString()} measurements ${formatDateRange(dateRange.min, dateRange.max)} &middot; <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700">View on GitHub</a>
     </footer>
   </div>
 
@@ -573,4 +567,18 @@ function formatLocalTime(isoString: string): string {
     minute: '2-digit',
     hour12: true,
   });
+}
+
+function formatDateRange(min: string | null, max: string | null): string {
+  if (!min || !max) return '';
+
+  const formatDate = (d: string) => {
+    const date = new Date(d + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  if (min === max) {
+    return `since ${formatDate(min)}`;
+  }
+  return `from ${formatDate(min)} to ${formatDate(max)}`;
 }
