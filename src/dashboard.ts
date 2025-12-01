@@ -64,49 +64,118 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Traffic Tracker - ${originLabel} ↔ ${destLabel}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* Heatmap cell interactions */
     .heatmap-cell {
-      transition: transform 0.1s ease-in-out;
+      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
     }
-    .heatmap-cell:hover {
+    .heatmap-cell:hover, .heatmap-cell:focus {
       transform: scale(1.1);
       z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Scroll shadow indicators */
+    .scroll-shadow {
+      background:
+        linear-gradient(to right, white 30%, transparent),
+        linear-gradient(to left, white 30%, transparent),
+        linear-gradient(to right, rgba(0,0,0,0.08), transparent),
+        linear-gradient(to left, rgba(0,0,0,0.08), transparent);
+      background-position: left, right, left, right;
+      background-size: 30px 100%, 30px 100%, 15px 100%, 15px 100%;
+      background-repeat: no-repeat;
+      background-attachment: local, local, scroll, scroll;
+    }
+
+    /* Skeleton animation */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    /* Fade in animation for table rows */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-row {
+      animation: fadeSlideIn 0.3s ease-out forwards;
+      opacity: 0;
+    }
+
+    /* Live pulse */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+    .pulse-ring {
+      animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <div class="container mx-auto px-4 py-8 max-w-7xl">
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 font-sans">
+  <div class="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
     <!-- Header -->
-    <header class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">Traffic Tracker</h1>
-      <p class="text-gray-600">${originLabel} ↔ ${destLabel} Travel Times</p>
-      <p class="text-sm text-gray-500 mt-1">All times displayed in Eastern Time (ET)</p>
+    <header class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Traffic Tracker</h1>
+      <p class="text-slate-600">${originLabel} ↔ ${destLabel} Travel Times</p>
+      <p class="text-sm text-slate-500 mt-1">All times displayed in Eastern Time (ET)</p>
     </header>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <form id="filterForm" class="flex flex-wrap gap-4 items-end">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-          <input type="date" name="startDate" id="startDate"
-            value="${filters.startDate || ''}"
-            min="${dateRange.min || ''}"
-            max="${dateRange.max || ''}"
-            class="border rounded px-3 py-2 text-sm">
+    <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 mb-6 transition-shadow hover:shadow-md">
+      <form id="filterForm" class="space-y-4 md:space-y-0 md:flex md:flex-wrap md:gap-4 md:items-end">
+        <div class="grid grid-cols-2 gap-4 md:contents">
+          <div>
+            <label for="startDate" class="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+            <input type="date" name="startDate" id="startDate"
+              value="${filters.startDate || ''}"
+              min="${dateRange.min || ''}"
+              max="${dateRange.max || ''}"
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm
+                     focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                     transition-colors">
+          </div>
+          <div>
+            <label for="endDate" class="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+            <input type="date" name="endDate" id="endDate"
+              value="${filters.endDate || ''}"
+              min="${dateRange.min || ''}"
+              max="${dateRange.max || ''}"
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm
+                     focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                     transition-colors">
+          </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-          <input type="date" name="endDate" id="endDate"
-            value="${filters.endDate || ''}"
-            min="${dateRange.min || ''}"
-            max="${dateRange.max || ''}"
-            class="border rounded px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Direction</label>
-          <select name="direction" id="direction" class="border rounded px-3 py-2 text-sm">
+          <label for="direction" class="block text-sm font-medium text-slate-700 mb-1">Direction</label>
+          <select name="direction" id="direction"
+            class="w-full md:w-auto border border-slate-300 rounded-lg px-3 py-2 text-sm
+                   focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                   transition-colors">
             <option value="">Both</option>
             <option value="outbound" ${filters.direction === 'outbound' ? 'selected' : ''}>${originShort} → ${destShort}</option>
             <option value="inbound" ${filters.direction === 'inbound' ? 'selected' : ''}>${destShort} → ${originShort}</option>
@@ -115,21 +184,51 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         <div class="flex items-center">
           <input type="checkbox" name="excludeHolidays" id="excludeHolidays"
             ${filters.excludeHolidays ? 'checked' : ''}
-            class="mr-2">
-          <label for="excludeHolidays" class="text-sm text-gray-700">Exclude Holidays</label>
+            class="w-4 h-4 rounded border-slate-300 text-blue-600
+                   focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0
+                   transition-colors cursor-pointer">
+          <label for="excludeHolidays" class="ml-2 text-sm text-slate-700 cursor-pointer">Exclude Holidays</label>
         </div>
         <div class="flex gap-2">
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+          <button type="submit"
+            class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium
+                   transition-all duration-150 ease-out
+                   hover:bg-blue-700 hover:shadow-md
+                   active:scale-[0.98] active:shadow-sm
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
             Apply
           </button>
-          <button type="button" onclick="resetFilters()" class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300">
+          <button type="button" onclick="resetFilters()"
+            class="flex-1 md:flex-none bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium
+                   transition-all duration-150 ease-out
+                   hover:bg-slate-200
+                   active:scale-[0.98]
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
             Reset
           </button>
         </div>
-        <div class="flex gap-2 ml-auto">
-          <button type="button" onclick="setQuickFilter('week')" class="text-sm text-blue-600 hover:underline">This Week</button>
-          <button type="button" onclick="setQuickFilter('month')" class="text-sm text-blue-600 hover:underline">This Month</button>
-          <button type="button" onclick="setQuickFilter('weekdays')" class="text-sm text-blue-600 hover:underline">Weekdays Only</button>
+        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 md:border-0 md:pt-0 md:ml-auto">
+          <button type="button" onclick="setQuickFilter('week')"
+            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-600
+                   transition-all duration-150
+                   hover:bg-slate-200 hover:text-slate-800
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+            This Week
+          </button>
+          <button type="button" onclick="setQuickFilter('month')"
+            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-600
+                   transition-all duration-150
+                   hover:bg-slate-200 hover:text-slate-800
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+            This Month
+          </button>
+          <button type="button" onclick="setQuickFilter('weekdays')"
+            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-600
+                   transition-all duration-150
+                   hover:bg-slate-200 hover:text-slate-800
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+            Weekdays Only
+          </button>
         </div>
       </form>
     </div>
@@ -137,16 +236,27 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <!-- Current Estimate -->
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">Current Estimate</h3>
-        <div id="currentEstimate" class="text-2xl font-bold text-gray-800">
-          <span class="animate-pulse">Loading...</span>
+      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5
+                  transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+        <h3 class="text-sm font-medium text-slate-500 mb-2">Current Estimate</h3>
+        <div id="currentEstimate">
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <div class="h-4 w-24 skeleton rounded"></div>
+              <div class="h-6 w-16 skeleton rounded"></div>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="h-4 w-24 skeleton rounded"></div>
+              <div class="h-6 w-16 skeleton rounded"></div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Best Times -->
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">Best Times (Fastest)</h3>
+      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5
+                  transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+        <h3 class="text-sm font-medium text-slate-500 mb-2">Best Times (Fastest)</h3>
         ${
           bestWorst.best.length > 0
             ? `<ul class="space-y-1">
@@ -154,21 +264,22 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
               .map(
                 (slot) => `
               <li class="text-sm">
-                <span class="font-medium text-green-600">${formatDuration(slot.avg_minutes)}</span>
-                <span class="text-gray-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
-                <span class="text-gray-400 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
+                <span class="font-semibold text-emerald-600">${formatDuration(slot.avg_minutes)}</span>
+                <span class="text-slate-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
+                <span class="text-slate-500 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
               </li>
             `
               )
               .join('')}
           </ul>`
-            : '<p class="text-gray-400 text-sm">Not enough data yet</p>'
+            : '<p class="text-slate-500 text-sm">Not enough data yet</p>'
         }
       </div>
 
       <!-- Worst Times -->
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">Worst Times (Slowest)</h3>
+      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5
+                  transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+        <h3 class="text-sm font-medium text-slate-500 mb-2">Worst Times (Slowest)</h3>
         ${
           bestWorst.worst.length > 0
             ? `<ul class="space-y-1">
@@ -176,15 +287,15 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
               .map(
                 (slot) => `
               <li class="text-sm">
-                <span class="font-medium text-red-600">${formatDuration(slot.avg_minutes)}</span>
-                <span class="text-gray-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
-                <span class="text-gray-400 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
+                <span class="font-semibold text-red-600">${formatDuration(slot.avg_minutes)}</span>
+                <span class="text-slate-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
+                <span class="text-slate-500 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
               </li>
             `
               )
               .join('')}
           </ul>`
-            : '<p class="text-gray-400 text-sm">Not enough data yet</p>'
+            : '<p class="text-slate-500 text-sm">Not enough data yet</p>'
         }
       </div>
     </div>
@@ -192,40 +303,49 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Hourly Average Chart -->
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-lg font-medium text-gray-800 mb-4">Average Duration by Hour</h3>
-        <div class="h-64">
+      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Average Duration by Hour</h3>
+        <div class="h-48 sm:h-64 lg:h-72" role="img" aria-label="Line chart showing average travel duration by hour of day">
           <canvas id="hourlyChart"></canvas>
         </div>
       </div>
 
       <!-- Route Breakdown Chart -->
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-lg font-medium text-gray-800 mb-4">By Route</h3>
-        <div class="h-64">
+      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">By Route</h3>
+        <div class="h-48 sm:h-64 lg:h-72" role="img" aria-label="Bar chart comparing travel times by route">
           <canvas id="routeChart"></canvas>
         </div>
       </div>
     </div>
 
     <!-- Heatmap -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-gray-800">Day/Hour Heatmap</h3>
-        <div class="flex gap-2">
-          <button onclick="switchHeatmap('outbound')" id="heatmapBtnOutbound"
-            class="px-3 py-1 text-sm rounded bg-blue-600 text-white">${originShort} → ${destShort}</button>
-          <button onclick="switchHeatmap('inbound')" id="heatmapBtnInbound"
-            class="px-3 py-1 text-sm rounded bg-gray-200">${destShort} → ${originShort}</button>
+    <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5 mb-6">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+        <h3 class="text-lg font-semibold text-slate-800">Day/Hour Heatmap</h3>
+        <div class="flex gap-2" role="tablist" aria-label="Select direction for heatmap">
+          <button onclick="switchHeatmap('outbound')" id="heatmapBtnOutbound" role="tab" aria-selected="true"
+            class="px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white
+                   transition-all duration-150
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+            ${originShort} → ${destShort}
+          </button>
+          <button onclick="switchHeatmap('inbound')" id="heatmapBtnInbound" role="tab" aria-selected="false"
+            class="px-3 py-1.5 text-sm rounded-lg font-medium bg-slate-100 text-slate-600
+                   transition-all duration-150
+                   hover:bg-slate-200
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+            ${destShort} → ${originShort}
+          </button>
         </div>
       </div>
-      <div id="heatmapContainer" class="overflow-x-auto">
-        <div id="heatmap" class="min-w-max"></div>
+      <div id="heatmapContainer" class="overflow-x-auto scroll-shadow -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div id="heatmap" class="min-w-max transition-opacity duration-200" role="grid" aria-label="Heatmap showing travel times by day and hour"></div>
       </div>
-      <div class="flex justify-center items-center gap-2 mt-4 text-xs text-gray-500">
+      <div class="flex justify-center items-center gap-2 mt-4 text-xs text-slate-500">
         <span>Faster</span>
-        <div class="w-4 h-4 bg-green-500 rounded"></div>
-        <div class="w-4 h-4 bg-green-300 rounded"></div>
+        <div class="w-4 h-4 bg-emerald-500 rounded"></div>
+        <div class="w-4 h-4 bg-emerald-300 rounded"></div>
         <div class="w-4 h-4 bg-yellow-300 rounded"></div>
         <div class="w-4 h-4 bg-orange-400 rounded"></div>
         <div class="w-4 h-4 bg-red-500 rounded"></div>
@@ -233,48 +353,81 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       </div>
     </div>
 
-    <!-- Recent Measurements Table -->
-    <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-lg font-medium text-gray-800 mb-3">Recent Measurements</h3>
+    <!-- Recent Measurements -->
+    <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
+      <h3 class="text-lg font-semibold text-slate-800 mb-3">Recent Measurements</h3>
       ${
         recentPaired.length > 0
           ? `
-      <table class="w-full">
-        <thead>
-          <tr class="text-xs text-gray-500 border-b">
-            <th class="text-left py-2 font-medium">Time (ET)</th>
-            <th class="text-right py-2 font-medium">${originShort} → ${destShort}</th>
-            <th class="text-right py-2 font-medium">${destShort} → ${originShort}</th>
-          </tr>
-        </thead>
-        <tbody class="text-sm">
-          ${recentPaired
-            .map(
-              (m) => `
-            <tr class="border-b border-gray-100">
-              <td class="py-1.5 text-gray-600">${formatLocalTime(m.measured_at_local)}</td>
-              <td class="py-1.5 text-right">
-                <span class="font-medium text-blue-600">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
-                ${m.outbound_route ? `<span class="text-xs text-gray-400 ml-1">${m.outbound_route}</span>` : ''}
-              </td>
-              <td class="py-1.5 text-right">
-                <span class="font-medium text-green-600">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
-                ${m.inbound_route ? `<span class="text-xs text-gray-400 ml-1">${m.inbound_route}</span>` : ''}
-              </td>
+      <!-- Desktop table -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="text-xs text-slate-500 border-b border-slate-200">
+              <th class="text-left py-2 font-medium">Time (ET)</th>
+              <th class="text-right py-2 font-medium">${originShort} → ${destShort}</th>
+              <th class="text-right py-2 font-medium">${destShort} → ${originShort}</th>
             </tr>
-          `
-            )
-            .join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="text-sm">
+            ${recentPaired
+              .map(
+                (m, i) => `
+              <tr class="border-b border-slate-100 animate-row" style="animation-delay: ${i * 30}ms">
+                <td class="py-2 text-slate-600">${formatLocalTime(m.measured_at_local)}</td>
+                <td class="py-2 text-right">
+                  <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
+                  ${m.outbound_route ? `<span class="text-xs text-slate-500 ml-1.5">${m.outbound_route}</span>` : ''}
+                </td>
+                <td class="py-2 text-right">
+                  <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
+                  ${m.inbound_route ? `<span class="text-xs text-slate-500 ml-1.5">${m.inbound_route}</span>` : ''}
+                </td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="sm:hidden space-y-3">
+        ${recentPaired
+          .map(
+            (m, i) => `
+          <div class="bg-slate-50 rounded-lg p-3 animate-row" style="animation-delay: ${i * 30}ms">
+            <div class="text-sm font-medium text-slate-600 mb-2">${formatLocalTime(m.measured_at_local)}</div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span class="text-slate-500 text-xs block">${originShort} → ${destShort}</span>
+                <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
+                ${m.outbound_route ? `<span class="text-xs text-slate-500 ml-1">${m.outbound_route}</span>` : ''}
+              </div>
+              <div>
+                <span class="text-slate-500 text-xs block">${destShort} → ${originShort}</span>
+                <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
+                ${m.inbound_route ? `<span class="text-xs text-slate-500 ml-1">${m.inbound_route}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `
+          )
+          .join('')}
+      </div>
       `
-          : '<p class="text-gray-400 text-sm">No measurements yet</p>'
+          : '<p class="text-slate-500 text-sm">No measurements yet</p>'
       }
     </div>
 
     <!-- Footer -->
-    <footer class="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
-      ${totalSamples.toLocaleString()} measurements ${formatDateRange(dateRange.min, dateRange.max)} &middot; <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700">View on GitHub</a>
+    <footer class="mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-500">
+      ${totalSamples.toLocaleString()} measurements ${formatDateRange(dateRange.min, dateRange.max)} &middot;
+      <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer"
+         class="text-slate-600 hover:text-slate-800 transition-colors
+                focus-visible:outline-none focus-visible:underline">
+        View on GitHub
+      </a>
     </footer>
   </div>
 
@@ -394,7 +547,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       const data = dayHourData.filter(d => d.direction === direction);
 
       if (data.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">Not enough data for heatmap</p>';
+        container.innerHTML = '<p class="text-slate-500 text-sm py-8 text-center">Not enough data for heatmap</p>';
         return;
       }
 
@@ -408,36 +561,38 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       const q2 = allValues[Math.floor(allValues.length * 0.5)] || 0;
       const q3 = allValues[Math.floor(allValues.length * 0.75)] || 0;
 
-      function getColor(value) {
-        if (value <= q1) return 'bg-green-500';
-        if (value <= q2) return 'bg-green-300';
-        if (value <= q3) return 'bg-yellow-300';
-        if (value <= q3 + (q3 - q2)) return 'bg-orange-400';
-        return 'bg-red-500';
+      function getColorClasses(value) {
+        if (value <= q1) return { bg: 'bg-emerald-500', text: 'text-white' };
+        if (value <= q2) return { bg: 'bg-emerald-300', text: 'text-slate-800' };
+        if (value <= q3) return { bg: 'bg-yellow-300', text: 'text-slate-800' };
+        if (value <= q3 + (q3 - q2)) return { bg: 'bg-orange-400', text: 'text-white' };
+        return { bg: 'bg-red-500', text: 'text-white' };
       }
 
-      let html = '<div class="grid gap-1" style="grid-template-columns: 50px repeat(7, 1fr);">';
+      let html = '<div class="grid gap-1" style="grid-template-columns: 50px repeat(7, minmax(36px, 1fr));">';
 
       // Header row
-      html += '<div class="text-xs text-gray-500"></div>';
+      html += '<div class="text-xs text-slate-500"></div>';
       for (const day of days) {
-        html += \`<div class="text-xs text-gray-500 text-center font-medium">\${dayNames[day]}</div>\`;
+        html += \`<div class="text-xs text-slate-500 text-center font-medium py-1">\${dayNames[day]}</div>\`;
       }
 
       // Data rows
       for (const hour of hours) {
-        html += \`<div class="text-xs text-gray-500 text-right pr-2">\${formatHour(hour)}</div>\`;
+        html += \`<div class="text-xs text-slate-500 text-right pr-2 py-1">\${formatHour(hour)}</div>\`;
         for (const day of days) {
           const item = data.find(d => d.day_of_week === day && d.hour === hour);
           if (item) {
-            const color = getColor(item.avg_minutes);
+            const colors = getColorClasses(item.avg_minutes);
             const mins = Math.round(item.avg_minutes);
-            html += \`<div class="heatmap-cell \${color} rounded text-center text-xs py-1 cursor-pointer relative"
-              title="\${dayNames[day]} \${formatHour(hour)}: \${mins}min (\${item.sample_count} samples)">
+            html += \`<button type="button"
+              class="heatmap-cell \${colors.bg} \${colors.text} rounded text-center text-xs py-1.5 font-medium
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              aria-label="\${dayNames[day]} at \${formatHour(hour)}: \${mins} minutes average, \${item.sample_count} samples">
               \${mins}
-            </div>\`;
+            </button>\`;
           } else {
-            html += '<div class="bg-gray-100 rounded text-center text-xs py-1 text-gray-400">-</div>';
+            html += '<div class="bg-slate-100 rounded text-center text-xs py-1.5 text-slate-400">-</div>';
           }
         }
       }
@@ -447,20 +602,33 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     }
 
     function switchHeatmap(direction) {
-      currentHeatmapDirection = direction;
-      initHeatmap(direction);
-
-      // Update button styles
+      const container = document.getElementById('heatmap');
       const btnOutbound = document.getElementById('heatmapBtnOutbound');
       const btnInbound = document.getElementById('heatmapBtnInbound');
 
-      if (direction === 'outbound') {
-        btnOutbound.className = 'px-3 py-1 text-sm rounded bg-blue-600 text-white';
-        btnInbound.className = 'px-3 py-1 text-sm rounded bg-gray-200';
-      } else {
-        btnOutbound.className = 'px-3 py-1 text-sm rounded bg-gray-200';
-        btnInbound.className = 'px-3 py-1 text-sm rounded bg-blue-600 text-white';
-      }
+      // Fade out
+      container.style.opacity = '0';
+
+      setTimeout(() => {
+        currentHeatmapDirection = direction;
+        initHeatmap(direction);
+
+        // Update button styles and ARIA
+        if (direction === 'outbound') {
+          btnOutbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
+          btnOutbound.setAttribute('aria-selected', 'true');
+          btnInbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-slate-100 text-slate-600 transition-all duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
+          btnInbound.setAttribute('aria-selected', 'false');
+        } else {
+          btnOutbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-slate-100 text-slate-600 transition-all duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
+          btnOutbound.setAttribute('aria-selected', 'false');
+          btnInbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
+          btnInbound.setAttribute('aria-selected', 'true');
+        }
+
+        // Fade in
+        container.style.opacity = '1';
+      }, 150);
     }
 
     // Load current estimate
@@ -476,14 +644,21 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         }
 
         container.innerHTML = \`
-          <div class="space-y-1">
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-500">\${originLabel} → \${destLabel}:</span>
-              <span class="text-lg font-bold text-blue-600">\${data.outbound ? data.outbound.duration_minutes + 'min' : 'N/A'}</span>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-emerald-600 font-medium">Live</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-500">\${destLabel} → \${originLabel}:</span>
-              <span class="text-lg font-bold text-green-600">\${data.inbound ? data.inbound.duration_minutes + 'min' : 'N/A'}</span>
+              <span class="text-sm text-slate-500">\${originLabel} → \${destLabel}</span>
+              <span class="text-lg font-bold text-blue-600 font-mono">\${data.outbound ? data.outbound.duration_minutes + 'm' : 'N/A'}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-500">\${destLabel} → \${originLabel}</span>
+              <span class="text-lg font-bold text-emerald-600 font-mono">\${data.inbound ? data.inbound.duration_minutes + 'm' : 'N/A'}</span>
             </div>
           </div>
         \`;
