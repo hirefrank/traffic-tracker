@@ -6,7 +6,7 @@ import type { Env, QueryFilters } from './types';
 import {
   getTotalSamples,
   getIntervalData,
-  getDayHourData,
+  getDayIntervalData,
   getRecentPairedMeasurements,
   getBestWorstSlots,
   getDateRange,
@@ -42,10 +42,10 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   const destShort = destLabel.substring(0, 10);
 
   // Fetch all data
-  const [totalSamples, intervalData, dayHour, recentPaired, bestWorst, dateRange] = await Promise.all([
+  const [totalSamples, intervalData, dayIntervalData, recentPaired, bestWorst, dateRange] = await Promise.all([
     getTotalSamples(env.DB, filters),
     getIntervalData(env.DB, filters),
-    getDayHourData(env.DB, filters),
+    getDayIntervalData(env.DB, filters),
     getRecentPairedMeasurements(env.DB, filters),
     getBestWorstSlots(env.DB, filters),
     getDateRange(env.DB),
@@ -53,7 +53,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
   // Prepare chart data
   const intervalChartData = JSON.stringify(intervalData);
-  const dayHourChartData = JSON.stringify(dayHour);
+  const dayIntervalChartData = JSON.stringify(dayIntervalData);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -329,7 +329,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
                 .map(
                   (m, i) => `
                 <tr class="border-b border-slate-100 animate-row hover:bg-slate-50/50 transition-colors" style="animation-delay: ${i * 30}ms">
-                  <td class="py-2 text-slate-600">${formatLocalTime(m.measured_at_local)}</td>
+                  <td class="py-2 text-slate-600 relative-time" data-time="${m.measured_at_local}">${formatLocalTime(m.measured_at_local)}</td>
                   <td class="py-2 text-right">
                     <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
                   </td>
@@ -352,7 +352,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     <!-- Heatmap -->
     <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5 mb-6">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-        <h3 class="text-lg font-semibold text-slate-800">Day/Hour Heatmap</h3>
+        <h3 class="text-lg font-semibold text-slate-800">Day Heatmap</h3>
         <div class="flex gap-2" role="tablist" aria-label="Select direction for heatmap">
           <button onclick="switchHeatmap('outbound')" id="heatmapBtnOutbound" role="tab" aria-selected="true"
             class="px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white
@@ -397,7 +397,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
   <script>
     // Data from server
     const intervalData = ${intervalChartData};
-    const dayHourData = ${dayHourChartData};
+    const dayIntervalData = ${dayIntervalChartData};
     const originLabel = '${originShort}';
     const destLabel = '${destShort}';
 
@@ -485,7 +485,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
     function initHeatmap(direction) {
       const container = document.getElementById('heatmap');
-      const data = dayHourData.filter(d => d.direction === direction);
+      const data = dayIntervalData.filter(d => d.direction === direction);
 
       if (data.length === 0) {
         container.innerHTML = '<p class="text-slate-500 text-sm py-8 text-center">Not enough data for heatmap</p>';
@@ -494,7 +494,9 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 
       const days = [0, 1, 2, 3, 4, 5, 6];
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const hours = [...new Set(data.map(d => d.hour))].sort((a, b) => a - b);
+
+      // Get unique time slots (hour * 60 + minute) sorted
+      const timeSlots = [...new Set(data.map(d => d.hour * 60 + d.minute))].sort((a, b) => a - b);
 
       // Calculate quartiles for coloring
       const allValues = data.map(d => d.avg_minutes).sort((a, b) => a - b);
@@ -510,7 +512,15 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         return { bg: 'bg-red-500', text: 'text-white' };
       }
 
-      let html = '<div class="grid gap-1" style="grid-template-columns: 50px repeat(7, minmax(36px, 1fr));">';
+      function formatTimeSlot(slot) {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        const h = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        const suffix = hour < 12 ? 'a' : 'p';
+        return h + ':' + (minute < 10 ? '0' : '') + minute + suffix;
+      }
+
+      let html = '<div class="grid gap-1" style="grid-template-columns: 55px repeat(7, minmax(32px, 1fr));">';
 
       // Header row
       html += '<div class="text-xs text-slate-500"></div>';
@@ -519,21 +529,23 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       }
 
       // Data rows
-      for (const hour of hours) {
-        html += \`<div class="text-xs text-slate-500 text-right pr-2 py-1">\${formatHour(hour)}</div>\`;
+      for (const slot of timeSlots) {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        html += \`<div class="text-xs text-slate-500 text-right pr-2 py-1">\${formatTimeSlot(slot)}</div>\`;
         for (const day of days) {
-          const item = data.find(d => d.day_of_week === day && d.hour === hour);
+          const item = data.find(d => d.day_of_week === day && d.hour === hour && d.minute === minute);
           if (item) {
             const colors = getColorClasses(item.avg_minutes);
             const mins = Math.round(item.avg_minutes);
             html += \`<button type="button"
-              class="heatmap-cell \${colors.bg} \${colors.text} rounded text-center text-xs py-1.5 font-medium
+              class="heatmap-cell \${colors.bg} \${colors.text} rounded text-center text-xs py-1 font-medium
                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              aria-label="\${dayNames[day]} at \${formatHour(hour)}: \${mins} minutes average, \${item.sample_count} samples">
+              aria-label="\${dayNames[day]} at \${formatTimeSlot(slot)}: \${mins} minutes average, \${item.sample_count} samples">
               \${mins}
             </button>\`;
           } else {
-            html += '<div class="bg-slate-100 rounded text-center text-xs py-1.5 text-slate-400">-</div>';
+            html += '<div class="bg-slate-100 rounded text-center text-xs py-1 text-slate-400">-</div>';
           }
         }
       }
@@ -662,11 +674,41 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       window.location.href = '/?' + params.toString();
     }
 
+    // Format relative time
+    function formatRelativeTime(isoString) {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      const remainingMins = diffMins % 60;
+
+      if (diffMins < 1) return 'just now';
+      if (diffMins < 60) return diffMins + 'm ago';
+      if (diffHours < 24) {
+        if (remainingMins === 0) return diffHours + 'h ago';
+        return diffHours + 'h ' + remainingMins + 'm ago';
+      }
+      if (diffDays === 1) return 'yesterday';
+      return diffDays + 'd ago';
+    }
+
+    function updateRelativeTimes() {
+      document.querySelectorAll('.relative-time').forEach(el => {
+        const time = el.getAttribute('data-time');
+        if (time) {
+          el.textContent = formatRelativeTime(time);
+        }
+      });
+    }
+
     // Initialize on load
     document.addEventListener('DOMContentLoaded', function() {
       initIntervalChart();
       initHeatmap('outbound');
       loadCurrentEstimate();
+      updateRelativeTimes();
     });
   </script>
 </body>
