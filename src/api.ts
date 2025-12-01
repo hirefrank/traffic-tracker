@@ -25,7 +25,7 @@ export function parseFilters(url: URL): QueryFilters {
   // Validate direction parameter at runtime
   const directionParam = url.searchParams.get('direction');
   const direction: Direction | null =
-    directionParam === 'bk_to_westport' || directionParam === 'westport_to_bk'
+    directionParam === 'outbound' || directionParam === 'inbound'
       ? directionParam
       : null;
 
@@ -196,10 +196,10 @@ export async function handleApiCurrent(env: Env): Promise<Response> {
       measured_at_local: string;
     }>();
 
-    const bkToWestport = recent.results?.find(r => r.direction === 'bk_to_westport');
-    const westportToBk = recent.results?.find(r => r.direction === 'westport_to_bk');
+    const outbound = recent.results?.find(r => r.direction === 'outbound');
+    const inbound = recent.results?.find(r => r.direction === 'inbound');
 
-    if (!bkToWestport && !westportToBk) {
+    if (!outbound && !inbound) {
       return new Response(
         JSON.stringify({
           error: 'No recent data available',
@@ -215,14 +215,14 @@ export async function handleApiCurrent(env: Env): Promise<Response> {
     return new Response(
       JSON.stringify({
         timestamp: new Date().toISOString(),
-        data_from: bkToWestport?.measured_at_local || westportToBk?.measured_at_local,
-        bk_to_westport: bkToWestport ? {
-          duration_minutes: Math.round(bkToWestport.duration_in_traffic_seconds / 60),
-          route: bkToWestport.route_summary,
+        data_from: outbound?.measured_at_local || inbound?.measured_at_local,
+        outbound: outbound ? {
+          duration_minutes: Math.round(outbound.duration_in_traffic_seconds / 60),
+          route: outbound.route_summary,
         } : null,
-        westport_to_bk: westportToBk ? {
-          duration_minutes: Math.round(westportToBk.duration_in_traffic_seconds / 60),
-          route: westportToBk.route_summary,
+        inbound: inbound ? {
+          duration_minutes: Math.round(inbound.duration_in_traffic_seconds / 60),
+          route: inbound.route_summary,
         } : null,
       }),
       {

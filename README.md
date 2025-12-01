@@ -98,6 +98,10 @@ npx wrangler secret put ORIGIN
 
 # Destination address (e.g., "456 Oak Ave, Westport, CT 06880")
 npx wrangler secret put DESTINATION
+
+# Optional: Custom labels for dashboard display (defaults to "Origin"/"Destination")
+npx wrangler secret put ORIGIN_LABEL
+npx wrangler secret put DESTINATION_LABEL
 ```
 
 ### 5. Configure variables (optional)
@@ -150,7 +154,7 @@ The `/api/data` and `/api/export` endpoints support filters:
 |-----------|-------------|---------|
 | `startDate` | Filter from date (ISO 8601) | `2024-01-01` |
 | `endDate` | Filter to date (ISO 8601) | `2024-12-31` |
-| `direction` | Filter by direction | `bk_to_westport` or `westport_to_bk` |
+| `direction` | Filter by direction | `outbound` or `inbound` |
 | `excludeHolidays` | Exclude US federal holidays | `true` |
 
 Example:

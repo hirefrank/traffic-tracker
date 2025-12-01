@@ -8,10 +8,13 @@ export interface Env {
   START_HOUR: string;
   END_HOUR: string;
   TIMEZONE: string;
+  // Optional labels for UI (defaults to "Origin"/"Destination" if not set)
+  ORIGIN_LABEL?: string;
+  DESTINATION_LABEL?: string;
 }
 
 // Direction type
-export type Direction = 'bk_to_westport' | 'westport_to_bk';
+export type Direction = 'outbound' | 'inbound';
 
 // Database models
 export interface Trip {

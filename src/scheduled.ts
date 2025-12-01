@@ -140,12 +140,12 @@ export async function handleScheduled(env: Env): Promise<void> {
 
   const directions: { direction: Direction; origin: string; destination: string }[] = [
     {
-      direction: 'bk_to_westport',
+      direction: 'outbound',
       origin: env.ORIGIN,
       destination: env.DESTINATION,
     },
     {
-      direction: 'westport_to_bk',
+      direction: 'inbound',
       origin: env.DESTINATION,
       destination: env.ORIGIN,
     },

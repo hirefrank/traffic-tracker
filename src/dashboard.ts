@@ -31,11 +31,17 @@ function formatDuration(minutes: number): string {
   return `${mins}m`;
 }
 
-function formatDirection(direction: string): string {
-  return direction === 'bk_to_westport' ? 'BK → Westport' : 'Westport → BK';
+function formatDirection(direction: string, originLabel: string, destLabel: string): string {
+  return direction === 'outbound' ? `${originLabel} → ${destLabel}` : `${destLabel} → ${originLabel}`;
 }
 
 export async function generateDashboard(env: Env, filters: QueryFilters): Promise<string> {
+  // Get labels from env vars with defaults
+  const originLabel = env.ORIGIN_LABEL || 'Origin';
+  const destLabel = env.DESTINATION_LABEL || 'Destination';
+  const originShort = originLabel.substring(0, 10);
+  const destShort = destLabel.substring(0, 10);
+
   // Fetch all data
   const [totalSamples, hourly, dayHour, byRoute, recent, bestWorst, dateRange] = await Promise.all([
     getTotalSamples(env.DB, filters),
@@ -57,7 +63,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Traffic Tracker - Brooklyn ↔ Westport</title>
+  <title>Traffic Tracker - ${originLabel} ↔ ${destLabel}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -75,7 +81,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     <!-- Header -->
     <header class="mb-8">
       <h1 class="text-3xl font-bold text-gray-800">Traffic Tracker</h1>
-      <p class="text-gray-600">Brooklyn ↔ Westport, CT Travel Times</p>
+      <p class="text-gray-600">${originLabel} ↔ ${destLabel} Travel Times</p>
       <p class="text-sm text-gray-500 mt-1">All times displayed in Eastern Time (ET)</p>
     </header>
 
@@ -102,8 +108,8 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
           <label class="block text-sm font-medium text-gray-700 mb-1">Direction</label>
           <select name="direction" id="direction" class="border rounded px-3 py-2 text-sm">
             <option value="">Both</option>
-            <option value="bk_to_westport" ${filters.direction === 'bk_to_westport' ? 'selected' : ''}>BK → Westport</option>
-            <option value="westport_to_bk" ${filters.direction === 'westport_to_bk' ? 'selected' : ''}>Westport → BK</option>
+            <option value="outbound" ${filters.direction === 'outbound' ? 'selected' : ''}>${originShort} → ${destShort}</option>
+            <option value="inbound" ${filters.direction === 'inbound' ? 'selected' : ''}>${destShort} → ${originShort}</option>
           </select>
         </div>
         <div class="flex items-center">
@@ -150,7 +156,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
               <li class="text-sm">
                 <span class="font-medium text-green-600">${formatDuration(slot.avg_minutes)}</span>
                 <span class="text-gray-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
-                <span class="text-gray-400 text-xs">(${formatDirection(slot.direction)})</span>
+                <span class="text-gray-400 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
               </li>
             `
               )
@@ -172,7 +178,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
               <li class="text-sm">
                 <span class="font-medium text-red-600">${formatDuration(slot.avg_minutes)}</span>
                 <span class="text-gray-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
-                <span class="text-gray-400 text-xs">(${formatDirection(slot.direction)})</span>
+                <span class="text-gray-400 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
               </li>
             `
               )
@@ -215,10 +221,10 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-medium text-gray-800">Day/Hour Heatmap</h3>
         <div class="flex gap-2">
-          <button onclick="switchHeatmap('bk_to_westport')" id="heatmapBtnBk"
-            class="px-3 py-1 text-sm rounded bg-blue-600 text-white">BK → Westport</button>
-          <button onclick="switchHeatmap('westport_to_bk')" id="heatmapBtnWp"
-            class="px-3 py-1 text-sm rounded bg-gray-200">Westport → BK</button>
+          <button onclick="switchHeatmap('outbound')" id="heatmapBtnOutbound"
+            class="px-3 py-1 text-sm rounded bg-blue-600 text-white">${originShort} → ${destShort}</button>
+          <button onclick="switchHeatmap('inbound')" id="heatmapBtnInbound"
+            class="px-3 py-1 text-sm rounded bg-gray-200">${destShort} → ${originShort}</button>
         </div>
       </div>
       <div id="heatmapContainer" class="overflow-x-auto">
@@ -257,7 +263,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
                 (trip) => `
               <tr class="hover:bg-gray-50">
                 <td class="px-4 py-2 text-sm text-gray-900">${formatLocalTime(trip.measured_at_local)}</td>
-                <td class="px-4 py-2 text-sm text-gray-600">${formatDirection(trip.direction)}</td>
+                <td class="px-4 py-2 text-sm text-gray-600">${formatDirection(trip.direction, originShort, destShort)}</td>
                 <td class="px-4 py-2 text-sm font-medium">${formatDuration(trip.duration_in_traffic_seconds / 60)}</td>
                 <td class="px-4 py-2 text-sm text-gray-600">${trip.route_summary || '-'}</td>
               </tr>
@@ -278,18 +284,20 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     const hourlyData = ${hourlyChartData};
     const dayHourData = ${dayHourChartData};
     const routeData = ${routeChartData};
+    const originLabel = '${originShort}';
+    const destLabel = '${destShort}';
 
     // Initialize hourly chart
     function initHourlyChart() {
       const ctx = document.getElementById('hourlyChart').getContext('2d');
 
       const hours = [...new Set(hourlyData.map(d => d.hour))].sort((a, b) => a - b);
-      const bkData = hours.map(h => {
-        const item = hourlyData.find(d => d.hour === h && d.direction === 'bk_to_westport');
+      const outboundData = hours.map(h => {
+        const item = hourlyData.find(d => d.hour === h && d.direction === 'outbound');
         return item ? item.avg_minutes : null;
       });
-      const wpData = hours.map(h => {
-        const item = hourlyData.find(d => d.hour === h && d.direction === 'westport_to_bk');
+      const inboundData = hours.map(h => {
+        const item = hourlyData.find(d => d.hour === h && d.direction === 'inbound');
         return item ? item.avg_minutes : null;
       });
 
@@ -299,16 +307,16 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
           labels: hours.map(h => formatHour(h)),
           datasets: [
             {
-              label: 'BK → Westport',
-              data: bkData,
+              label: originLabel + ' → ' + destLabel,
+              data: outboundData,
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               tension: 0.3,
               fill: true,
             },
             {
-              label: 'Westport → BK',
-              data: wpData,
+              label: destLabel + ' → ' + originLabel,
+              data: inboundData,
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.1)',
               tension: 0.3,
@@ -337,12 +345,12 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       const ctx = document.getElementById('routeChart').getContext('2d');
 
       const routes = [...new Set(routeData.map(d => d.route_summary))];
-      const bkData = routes.map(r => {
-        const item = routeData.find(d => d.route_summary === r && d.direction === 'bk_to_westport');
+      const outboundRouteData = routes.map(r => {
+        const item = routeData.find(d => d.route_summary === r && d.direction === 'outbound');
         return item ? item.avg_minutes : 0;
       });
-      const wpData = routes.map(r => {
-        const item = routeData.find(d => d.route_summary === r && d.direction === 'westport_to_bk');
+      const inboundRouteData = routes.map(r => {
+        const item = routeData.find(d => d.route_summary === r && d.direction === 'inbound');
         return item ? item.avg_minutes : 0;
       });
 
@@ -352,13 +360,13 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
           labels: routes,
           datasets: [
             {
-              label: 'BK → Westport',
-              data: bkData,
+              label: originLabel + ' → ' + destLabel,
+              data: outboundRouteData,
               backgroundColor: '#3b82f6',
             },
             {
-              label: 'Westport → BK',
-              data: wpData,
+              label: destLabel + ' → ' + originLabel,
+              data: inboundRouteData,
               backgroundColor: '#10b981',
             },
           ],
@@ -380,7 +388,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     }
 
     // Initialize heatmap
-    let currentHeatmapDirection = 'bk_to_westport';
+    let currentHeatmapDirection = 'outbound';
 
     function initHeatmap(direction) {
       const container = document.getElementById('heatmap');
@@ -444,15 +452,15 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       initHeatmap(direction);
 
       // Update button styles
-      const btnBk = document.getElementById('heatmapBtnBk');
-      const btnWp = document.getElementById('heatmapBtnWp');
+      const btnOutbound = document.getElementById('heatmapBtnOutbound');
+      const btnInbound = document.getElementById('heatmapBtnInbound');
 
-      if (direction === 'bk_to_westport') {
-        btnBk.className = 'px-3 py-1 text-sm rounded bg-blue-600 text-white';
-        btnWp.className = 'px-3 py-1 text-sm rounded bg-gray-200';
+      if (direction === 'outbound') {
+        btnOutbound.className = 'px-3 py-1 text-sm rounded bg-blue-600 text-white';
+        btnInbound.className = 'px-3 py-1 text-sm rounded bg-gray-200';
       } else {
-        btnBk.className = 'px-3 py-1 text-sm rounded bg-gray-200';
-        btnWp.className = 'px-3 py-1 text-sm rounded bg-blue-600 text-white';
+        btnOutbound.className = 'px-3 py-1 text-sm rounded bg-gray-200';
+        btnInbound.className = 'px-3 py-1 text-sm rounded bg-blue-600 text-white';
       }
     }
 
@@ -471,12 +479,12 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         container.innerHTML = \`
           <div class="space-y-1">
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-500">BK → WP:</span>
-              <span class="text-lg font-bold text-blue-600">\${data.bk_to_westport.duration_minutes}min</span>
+              <span class="text-sm text-gray-500">\${originLabel} → \${destLabel}:</span>
+              <span class="text-lg font-bold text-blue-600">\${data.outbound ? data.outbound.duration_minutes + 'min' : 'N/A'}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-500">WP → BK:</span>
-              <span class="text-lg font-bold text-green-600">\${data.westport_to_bk.duration_minutes}min</span>
+              <span class="text-sm text-gray-500">\${destLabel} → \${originLabel}:</span>
+              <span class="text-lg font-bold text-green-600">\${data.inbound ? data.inbound.duration_minutes + 'min' : 'N/A'}</span>
             </div>
           </div>
         \`;
@@ -543,7 +551,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     document.addEventListener('DOMContentLoaded', function() {
       initHourlyChart();
       initRouteChart();
-      initHeatmap('bk_to_westport');
+      initHeatmap('outbound');
       loadCurrentEstimate();
     });
   </script>
