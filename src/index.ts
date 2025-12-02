@@ -7,8 +7,9 @@
 
 import type { Env, QueryFilters, Direction } from './types';
 import { handleScheduled } from './scheduled';
-import { handleApiData, handleApiExport, handleApiHealth, handleApiCurrent, parseFilters } from './api';
+import { handleApiData, handleApiExport, handleApiHealth, handleApiCurrent, parseFilters, handleApiRoutes } from './api';
 import { generateDashboard } from './dashboard';
+import { parseRoutes, getRouteById, getDefaultRoute } from './routes';
 
 export default {
   /**
@@ -27,6 +28,10 @@ export default {
 
     try {
       // API routes
+      if (path === '/api/routes') {
+        return await handleApiRoutes(env);
+      }
+
       if (path === '/api/data') {
         return await handleApiData(request, env);
       }
@@ -40,13 +45,35 @@ export default {
       }
 
       if (path === '/api/current') {
-        return await handleApiCurrent(env);
+        const routeId = url.searchParams.get('routeId');
+        return await handleApiCurrent(env, routeId);
       }
 
-      // Dashboard route
+      // Root redirect to first route
       if (path === '/' || path === '/index.html') {
+        const routes = parseRoutes(env.ROUTES);
+        const defaultRoute = getDefaultRoute(routes);
+        return Response.redirect(`${url.origin}/route/${defaultRoute.id}${url.search}`, 302);
+      }
+
+      // Route-specific dashboard
+      if (path.startsWith('/route/')) {
+        const routeId = path.split('/')[2];
+
+        if (!routeId) {
+          return new Response('Route ID required', { status: 400 });
+        }
+
+        const routes = parseRoutes(env.ROUTES);
+        const route = getRouteById(routes, routeId);
+
+        if (!route) {
+          return new Response('Route not found', { status: 404 });
+        }
+
         const filters = parseFilters(url);
-        const html = await generateDashboard(env, filters);
+        filters.routeId = routeId;
+        const html = await generateDashboard(env, filters, route, routes);
         return new Response(html, {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',

@@ -2,7 +2,7 @@
  * Web Dashboard HTML Generation
  */
 
-import type { Env, QueryFilters } from './types';
+import type { Env, QueryFilters, Route } from './types';
 import {
   getTotalSamples,
   getIntervalData,
@@ -34,10 +34,16 @@ function formatDirection(direction: string, originLabel: string, destLabel: stri
   return direction === 'outbound' ? `${originLabel} → ${destLabel}` : `${destLabel} → ${originLabel}`;
 }
 
-export async function generateDashboard(env: Env, filters: QueryFilters): Promise<string> {
-  // Get labels from env vars with defaults
+export async function generateDashboard(
+  env: Env,
+  filters: QueryFilters,
+  currentRoute: Route,
+  allRoutes: Route[]
+): Promise<string> {
+  // Get labels from route config
   const originLabel = env.ORIGIN_LABEL || 'Origin';
-  const destLabel = env.DESTINATION_LABEL || 'Destination';
+  const destLabel = currentRoute.label;
+  const isActiveRoute = currentRoute.active !== false;
   const originShort = originLabel.substring(0, 10);
   const destShort = destLabel.substring(0, 10);
 
@@ -48,7 +54,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     getDayIntervalData(env.DB, filters),
     getRecentPairedMeasurements(env.DB, filters),
     getBestWorstSlots(env.DB, filters),
-    getDateRange(env.DB),
+    getDateRange(env.DB, filters.routeId),
   ]);
 
   // Prepare chart data
@@ -140,8 +146,23 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     <!-- Header -->
     <header class="mb-6 sm:mb-8">
       <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Traffic Tracker</h1>
-      <p class="text-slate-600">${originLabel} ↔ ${destLabel} Travel Times</p>
+      <p class="text-slate-600">
+        ${originLabel} → ${allRoutes.length > 1 ? `
+        <select id="routeSelect" onchange="window.location.href='/route/' + this.value + window.location.search"
+          class="inline-block border-b border-slate-400 bg-transparent text-slate-600
+                 focus:outline-none focus:border-blue-500 cursor-pointer
+                 appearance-none pr-5 bg-no-repeat bg-right"
+          style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2364748b%22 stroke-width=%222%22><path d=%22M6 9l6 6 6-6%22/></svg>');">
+          ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label}${r.active === false ? ' (archived)' : ''}</option>`).join('')}
+        </select>
+        ` : destLabel} Travel Times
+      </p>
       <p class="text-sm text-slate-500 mt-1">All times displayed in Eastern Time (ET)</p>
+      ${!isActiveRoute ? `
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+        <span class="font-medium">Archived Route:</span> This route is no longer collecting new data. Showing historical data only.
+      </div>
+      ` : ''}
     </header>
 
     <!-- Filters -->
@@ -400,6 +421,8 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     const dayIntervalData = ${dayIntervalChartData};
     const originLabel = '${originShort}';
     const destLabel = '${destShort}';
+    const routeId = '${currentRoute.id}';
+    const isActiveRoute = ${isActiveRoute};
 
     // Initialize interval chart (15-minute intervals)
     function initIntervalChart() {
@@ -587,8 +610,19 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
     // Load current estimate
     async function loadCurrentEstimate() {
       const container = document.getElementById('currentEstimate');
+
+      if (!isActiveRoute) {
+        container.innerHTML = \`
+          <div class="text-sm text-slate-500">
+            <p class="text-amber-600 font-medium mb-2">Route archived</p>
+            <p>No live data - this route is no longer collecting measurements.</p>
+          </div>
+        \`;
+        return;
+      }
+
       try {
-        const res = await fetch('/api/current');
+        const res = await fetch('/api/current?routeId=' + routeId);
         const data = await res.json();
 
         if (data.error) {
@@ -646,11 +680,11 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       if (direction) params.set('direction', direction);
       if (excludeHolidays) params.set('excludeHolidays', 'true');
 
-      window.location.href = '/?' + params.toString();
+      window.location.href = '/route/' + routeId + '?' + params.toString();
     }
 
     function resetFilters() {
-      window.location.href = '/';
+      window.location.href = '/route/' + routeId;
     }
 
     function setQuickFilter(type) {
@@ -671,7 +705,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         params.set('excludeHolidays', 'true');
       }
 
-      window.location.href = '/?' + params.toString();
+      window.location.href = '/route/' + routeId + '?' + params.toString();
     }
 
     // Format relative time

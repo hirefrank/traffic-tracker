@@ -44,11 +44,32 @@ A Cloudflare Worker that collects travel time estimates between two locations us
 3. Choose **Directions API** from the list
 4. Click **Save**
 
-### Pricing
+### Pricing & API Usage
 
-As of March 2025, Google Maps uses [free usage caps](https://developers.google.com/maps/billing-and-pricing/march-2025#free-usage-caps) instead of the previous $200 monthly credit. The Directions API is classified as a "Legacy" service.
+Google Maps provides **10,000 free Directions API requests per month**. After that, it's [$5 per 1,000 requests](https://developers.google.com/maps/billing-and-pricing/pricing).
 
-This worker makes ~4 API calls per hour (2 directions every 15 minutes) during a 15-hour collection window, totaling ~1,800 requests/month. Check the [Google Maps pricing page](https://developers.google.com/maps/billing-and-pricing/pricing) for current free tier limits and costs.
+#### Usage Calculator
+
+Each route requires 2 API calls per collection (outbound + inbound), collected every 15 minutes during your configured hours.
+
+| Routes | Calls/Hour | Calls/Day (15h) | Calls/Week | Calls/Month | Free Tier? |
+|--------|------------|-----------------|------------|-------------|------------|
+| 1      | 8          | 120             | 840        | ~3,600      | Yes |
+| 2      | 16         | 240             | 1,680      | ~7,200      | Yes |
+| 3      | 24         | 360             | 2,520      | ~10,800     | ~Borderline |
+| 4      | 32         | 480             | 3,360      | ~14,400     | No (~$22/mo) |
+
+**Formula:** `routes × 2 directions × 4 per hour × hours/day × 30 days`
+
+**Example (4 destinations):**
+- 4 routes × 2 directions = 8 API calls per collection
+- 4 collections/hour × 15 hours = 480 calls/day
+- 480 × 30 = **14,400 calls/month**
+- Overage: 4,400 calls × $0.005 = **~$22/month**
+
+**Tips to reduce usage:**
+- Reduce collection hours (`START_HOUR`/`END_HOUR` in wrangler.toml)
+- Set `active: false` on routes you don't need real-time data for
 
 ## Setup
 
@@ -83,8 +104,6 @@ npx wrangler d1 execute traffic-tracker --file=schema.sql --remote
 
 ### 4. Configure secrets
 
-Set the required secrets for your worker:
-
 ```bash
 # Google Maps API key (required for Directions API)
 npx wrangler secret put GOOGLE_MAPS_API_KEY
@@ -92,19 +111,44 @@ npx wrangler secret put GOOGLE_MAPS_API_KEY
 # API access key (Bearer token for protected endpoints)
 # Generate a secure key with: openssl rand -base64 32
 npx wrangler secret put API_ACCESS_KEY
-
-# Origin address (e.g., "123 Main St, Brooklyn, NY 11201")
-npx wrangler secret put ORIGIN
-
-# Destination address (e.g., "456 Oak Ave, Westport, CT 06880")
-npx wrangler secret put DESTINATION
-
-# Optional: Custom labels for dashboard display (defaults to "Origin"/"Destination")
-npx wrangler secret put ORIGIN_LABEL
-npx wrangler secret put DESTINATION_LABEL
 ```
 
-### 5. Configure variables (optional)
+### 5. Configure routes
+
+Copy the example routes file and customize:
+
+```bash
+cp routes.example.yaml routes.yaml
+```
+
+Edit `routes.yaml` with your locations:
+
+```yaml
+origin:
+  address: 123 Main St, Brooklyn, NY 11201
+  label: Home
+
+routes:
+  - id: work
+    label: Office
+    destination: 456 Oak Ave, Manhattan, NY 10001
+    active: true
+
+  - id: gym
+    label: Gym
+    destination: 789 Fitness Blvd, Brooklyn, NY 11215
+    active: true
+```
+
+Push routes to Cloudflare:
+
+```bash
+pnpm run routes:push
+```
+
+This pushes `ORIGIN`, `ORIGIN_LABEL`, and `ROUTES` secrets in one command.
+
+### 6. Configure variables (optional)
 
 Edit `wrangler.toml` to customize the collection window:
 
@@ -115,7 +159,7 @@ END_HOUR = "21"       # Stop collecting at 9pm local time
 TIMEZONE = "America/New_York"
 ```
 
-### 6. Deploy
+### 7. Deploy
 
 ```bash
 pnpm run deploy
@@ -125,17 +169,24 @@ pnpm run deploy
 
 ### Dashboard
 
-Visit your worker URL (e.g., `https://traffic-tracker.your-subdomain.workers.dev/`) to see the traffic dashboard.
+Visit your worker URL to see the traffic dashboard:
+
+- `/` - Redirects to the first route
+- `/route/{id}` - Dashboard for a specific route (e.g., `/route/work`)
+
+Each route has its own dashboard with travel time charts, heatmaps, and statistics.
 
 ### API Endpoints
 
 | Endpoint | Auth | Description |
 |----------|------|-------------|
-| `GET /` | No | Web dashboard |
+| `GET /` | No | Redirects to first route dashboard |
+| `GET /route/{id}` | No | Dashboard for a specific route |
+| `GET /api/routes` | No | List of configured routes |
 | `GET /api/health` | No | Health check and stats |
-| `GET /api/current` | No | Current travel estimates |
-| `GET /api/data` | Yes | Aggregated traffic data (JSON) |
-| `GET /api/export` | Yes | Export all data (CSV) |
+| `GET /api/current?routeId=xxx` | No | Current travel estimates for a route |
+| `GET /api/data?routeId=xxx` | Yes | Aggregated traffic data (JSON) |
+| `GET /api/export?routeId=xxx` | Yes | Export route data (CSV) |
 
 #### Authentication
 
@@ -236,15 +287,17 @@ npx wrangler d1 execute traffic-tracker --file=schema.sql --remote
 # Required
 npx wrangler secret put GOOGLE_MAPS_API_KEY
 npx wrangler secret put API_ACCESS_KEY        # Generate with: openssl rand -base64 32
-npx wrangler secret put ORIGIN                # Your starting address
-npx wrangler secret put DESTINATION           # Your ending address
-
-# Optional (for dashboard labels)
-npx wrangler secret put ORIGIN_LABEL          # e.g., "Home"
-npx wrangler secret put DESTINATION_LABEL     # e.g., "Office"
 ```
 
-### 5. Customize collection window (optional)
+### 5. Configure routes
+
+```bash
+cp routes.example.yaml routes.yaml
+# Edit routes.yaml with your addresses
+pnpm run routes:push
+```
+
+### 6. Customize collection window (optional)
 
 Edit the `[vars]` section in `wrangler.toml`:
 
@@ -255,7 +308,7 @@ END_HOUR = "21"               # Stop at 9pm
 TIMEZONE = "America/New_York" # Your timezone
 ```
 
-### 6. Deploy
+### 7. Deploy
 
 ```bash
 pnpm run deploy

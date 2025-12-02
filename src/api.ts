@@ -13,6 +13,7 @@ import {
   getAllTrips,
   getHealthStatus,
 } from './queries';
+import { parseRoutes } from './routes';
 
 /**
  * Parse query parameters into filters
@@ -21,6 +22,7 @@ export function parseFilters(url: URL): QueryFilters {
   const startDate = url.searchParams.get('startDate');
   const endDate = url.searchParams.get('endDate');
   const excludeHolidays = url.searchParams.get('excludeHolidays') === 'true';
+  const routeId = url.searchParams.get('routeId');
 
   // Validate direction parameter at runtime
   const directionParam = url.searchParams.get('direction');
@@ -33,6 +35,7 @@ export function parseFilters(url: URL): QueryFilters {
     startDate,
     endDate,
     direction,
+    routeId,
     excludeHolidays,
   };
 }
@@ -130,6 +133,7 @@ export async function handleApiExport(request: Request, env: Env): Promise<Respo
     'measured_at',
     'measured_at_local',
     'direction',
+    'route_id',
     'duration_seconds',
     'duration_in_traffic_seconds',
     'distance_meters',
@@ -145,6 +149,7 @@ export async function handleApiExport(request: Request, env: Env): Promise<Respo
       trip.measured_at,
       trip.measured_at_local,
       trip.direction,
+      trip.route_id,
       trip.duration_seconds,
       trip.duration_in_traffic_seconds,
       trip.distance_meters ?? '',
@@ -157,7 +162,8 @@ export async function handleApiExport(request: Request, env: Env): Promise<Respo
 
   const csv = [headers.join(','), ...rows].join('\n');
 
-  const filename = `traffic-data-${new Date().toISOString().split('T')[0]}.csv`;
+  const date = new Date().toISOString().split('T')[0];
+  const filename = `traffic-data-${filters.routeId ? filters.routeId + '-' : ''}${date}.csv`;
 
   return new Response(csv, {
     headers: {
@@ -181,19 +187,27 @@ export async function handleApiHealth(env: Env): Promise<Response> {
 /**
  * Handle /api/current endpoint - get most recent estimates from database
  */
-export async function handleApiCurrent(env: Env): Promise<Response> {
+export async function handleApiCurrent(env: Env, routeId?: string | null): Promise<Response> {
   try {
     // Query most recent trip data for each direction (collected every 15 min)
-    const recent = await env.DB.prepare(`
-      SELECT direction, duration_in_traffic_seconds, route_summary, measured_at_local
+    const query = `
+      SELECT direction, duration_in_traffic_seconds, route_summary, measured_at_local, route_id
       FROM trips
       WHERE measured_at >= datetime('now', '-30 minutes')
+      ${routeId ? 'AND route_id = ?' : ''}
       ORDER BY measured_at DESC
-    `).all<{
+    `;
+
+    const stmt = routeId
+      ? env.DB.prepare(query).bind(routeId)
+      : env.DB.prepare(query);
+
+    const recent = await stmt.all<{
       direction: string;
       duration_in_traffic_seconds: number;
       route_summary: string | null;
       measured_at_local: string;
+      route_id: string;
     }>();
 
     const outbound = recent.results?.find(r => r.direction === 'outbound');
@@ -219,10 +233,12 @@ export async function handleApiCurrent(env: Env): Promise<Response> {
         outbound: outbound ? {
           duration_minutes: Math.round(outbound.duration_in_traffic_seconds / 60),
           route: outbound.route_summary,
+          route_id: outbound.route_id,
         } : null,
         inbound: inbound ? {
           duration_minutes: Math.round(inbound.duration_in_traffic_seconds / 60),
           route: inbound.route_summary,
+          route_id: inbound.route_id,
         } : null,
       }),
       {
@@ -241,4 +257,14 @@ export async function handleApiCurrent(env: Env): Promise<Response> {
       }
     );
   }
+}
+
+/**
+ * Handle /api/routes endpoint - return available routes
+ */
+export async function handleApiRoutes(env: Env): Promise<Response> {
+  const routes = parseRoutes(env.ROUTES);
+  return new Response(JSON.stringify(routes), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 }

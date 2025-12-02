@@ -11,14 +11,16 @@ CREATE TABLE IF NOT EXISTS trips (
   route_summary TEXT,                  -- e.g., "I-95 N" or "Hutchinson River Pkwy"
   day_of_week INTEGER CHECK (day_of_week >= 0 AND day_of_week <= 6),                 -- 0=Sun, 6=Sat (computed from local time)
   hour_local INTEGER CHECK (hour_local >= 0 AND hour_local <= 23),                  -- 0-23 (computed from local time)
-  is_holiday INTEGER DEFAULT 0 CHECK (is_holiday IN (0, 1))         -- 1 if federal/major holiday
+  is_holiday INTEGER DEFAULT 0 CHECK (is_holiday IN (0, 1)),         -- 1 if federal/major holiday
+  route_id TEXT NOT NULL                       -- Unique identifier for the route
 );
 
 CREATE INDEX IF NOT EXISTS idx_measured_at ON trips(measured_at);
 CREATE INDEX IF NOT EXISTS idx_direction ON trips(direction);
 CREATE INDEX IF NOT EXISTS idx_day_hour ON trips(day_of_week, hour_local);
 CREATE INDEX IF NOT EXISTS idx_route ON trips(route_summary);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_measurement ON trips(measured_at, direction);
+CREATE INDEX IF NOT EXISTS idx_route_id ON trips(route_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_measurement ON trips(measured_at, direction, route_id);
 
 CREATE TABLE IF NOT EXISTS collection_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

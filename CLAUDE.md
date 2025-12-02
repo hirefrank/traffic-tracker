@@ -18,6 +18,9 @@ pnpm run deploy           # Deploy to Cloudflare Workers
 # Database
 pnpm run db:create        # Create D1 database (first time only)
 pnpm run db:migrate       # Run schema.sql on remote D1
+
+# Routes Configuration
+pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
 ```
 
 ## Architecture
@@ -44,12 +47,49 @@ pnpm run db:migrate       # Run schema.sql on remote D1
 
 ## Environment Configuration
 
-Secrets (set via `wrangler secret put`):
+### Routes Configuration (routes.yaml)
+
+All location configuration is managed via `routes.yaml`. Copy from `routes.example.yaml` and customize:
+
+```yaml
+# Your starting point
+origin:
+  address: 123 Home Street, Brooklyn, NY 11201
+  label: Home  # Optional (defaults to "Origin")
+
+# Destinations to track
+routes:
+  - id: work
+    label: Office
+    destination: 456 Main St, New York, NY 10001
+    active: true
+
+  - id: gym
+    label: Gym
+    destination: 789 Fitness Ave, Brooklyn, NY 11215
+    active: true
+```
+
+Run `pnpm run routes:push` to push configuration to Cloudflare secrets.
+
+- `id` - URL-safe identifier (alphanumeric, hyphens, underscores)
+- `label` - Display name shown in the dashboard
+- `destination` - Full address for Google Maps API
+- `active` - Set to `false` to stop collecting data (display historical only)
+
+### Other Secrets
+
+Set manually via `wrangler secret put`:
 - `GOOGLE_MAPS_API_KEY` - Google Maps Directions API key
 - `API_ACCESS_KEY` - Bearer token for protected API endpoints
-- `ORIGIN` / `DESTINATION` - Address strings for the route
-- `ORIGIN_LABEL` / `DESTINATION_LABEL` - Optional display labels for dashboard (defaults to "Origin"/"Destination")
 
-Variables (in wrangler.toml):
+### URL Structure
+
+- `/` - Redirects to the first route's dashboard
+- `/route/{id}` - Dashboard for a specific route (e.g., `/route/work`)
+- `/api/routes` - Returns list of configured routes (public)
+
+### Variables (in wrangler.toml)
+
 - `START_HOUR` / `END_HOUR` - Collection window (local time)
 - `TIMEZONE` - Default: America/New_York
