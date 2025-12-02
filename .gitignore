@@ -13,6 +13,9 @@ dist/
 .env.local
 .env.*.local
 
+# Routes config (contains addresses)
+routes.yaml
+
 # IDE
 .idea/
 .vscode/

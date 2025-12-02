@@ -1,0 +1,28 @@
+# Routes Configuration
+# Copy this file to routes.yaml and customize for your locations.
+# Then run: pnpm run routes:push
+#
+# This will push both ORIGIN and ROUTES secrets to Cloudflare.
+
+# Your starting point for all routes
+origin:
+  address: 123 Home Street, Brooklyn, NY 11201
+  label: Home  # Optional display label (defaults to "Origin")
+
+# Destinations to track from the origin
+routes:
+  - id: work
+    label: Office
+    destination: 456 Main St, New York, NY 10001
+    active: true
+
+  - id: gym
+    label: Gym
+    destination: 789 Fitness Ave, Brooklyn, NY 11215
+    active: true
+
+# Example of an archived route (no longer collecting data):
+#  - id: old-office
+#    label: Old Office
+#    destination: 999 Former St, Manhattan, NY 10002
+#    active: false

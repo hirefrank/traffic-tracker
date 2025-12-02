@@ -7,10 +7,12 @@
 import type { Env, Direction } from './types';
 import { fetchDirectionsWithRetry, MapsApiError } from './maps-api';
 import { isHoliday } from './holidays';
+import { parseRoutes, getActiveRoutes } from './routes';
 
 interface CollectionResult {
   success: boolean;
   direction: Direction;
+  routeId: string;
   error?: string;
 }
 
@@ -60,6 +62,7 @@ async function collectDirection(
   direction: Direction,
   origin: string,
   destination: string,
+  routeId: string,
   now: Date,
   localTime: Date,
   timezone: string
@@ -77,8 +80,8 @@ async function collectDirection(
       `INSERT INTO trips (
         measured_at, measured_at_local, direction, duration_seconds,
         duration_in_traffic_seconds, distance_meters, route_summary,
-        day_of_week, hour_local, is_holiday
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        day_of_week, hour_local, is_holiday, route_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         measuredAt,
@@ -90,14 +93,15 @@ async function collectDirection(
         result.route_summary,
         dayOfWeek,
         hourLocal,
-        holiday
+        holiday,
+        routeId
       )
       .run();
 
-    return { success: true, direction };
+    return { success: true, direction, routeId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, direction, error: errorMessage };
+    return { success: false, direction, routeId, error: errorMessage };
   }
 }
 
@@ -138,18 +142,9 @@ export async function handleScheduled(env: Env): Promise<void> {
     return;
   }
 
-  const directions: { direction: Direction; origin: string; destination: string }[] = [
-    {
-      direction: 'outbound',
-      origin: env.ORIGIN,
-      destination: env.DESTINATION,
-    },
-    {
-      direction: 'inbound',
-      origin: env.DESTINATION,
-      destination: env.ORIGIN,
-    },
-  ];
+  // Parse and get active routes
+  const routes = parseRoutes(env.ROUTES);
+  const activeRoutes = getActiveRoutes(routes);
 
   // Use D1 batch for atomic operations
   let apiCallsMade = 0;
@@ -157,16 +152,40 @@ export async function handleScheduled(env: Env): Promise<void> {
 
   try {
     // Collect data from Google Maps API first (outside transaction)
-    for (const { direction, origin, destination } of directions) {
+    for (const route of activeRoutes) {
+      // Outbound: ORIGIN → route.destination
       apiCallsMade++;
-      const result = await collectDirection(env, direction, origin, destination, now, localTime, timezone);
-      results.push(result);
+      const outboundResult = await collectDirection(
+        env,
+        'outbound',
+        env.ORIGIN,
+        route.destination,
+        route.id,
+        now,
+        localTime,
+        timezone
+      );
+      results.push(outboundResult);
+
+      // Inbound: route.destination → ORIGIN
+      apiCallsMade++;
+      const inboundResult = await collectDirection(
+        env,
+        'inbound',
+        route.destination,
+        env.ORIGIN,
+        route.id,
+        now,
+        localTime,
+        timezone
+      );
+      results.push(inboundResult);
     }
 
     // Determine overall status
     const errors = results.filter((r) => !r.success);
     const status = errors.length === 0 ? 'success' : 'error';
-    const errorMessage = errors.length > 0 ? errors.map((e) => `${e.direction}: ${e.error}`).join('; ') : null;
+    const errorMessage = errors.length > 0 ? errors.map((e) => `${e.routeId}/${e.direction}: ${e.error}`).join('; ') : null;
 
     // Log the collection
     await logCollection(env.DB, status, errorMessage, apiCallsMade);

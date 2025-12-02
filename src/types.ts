@@ -4,17 +4,24 @@ export interface Env {
   GOOGLE_MAPS_API_KEY: string;
   API_ACCESS_KEY: string;
   ORIGIN: string;
-  DESTINATION: string;
+  ROUTES: string;  // JSON string of Route[]
   START_HOUR: string;
   END_HOUR: string;
   TIMEZONE: string;
-  // Optional labels for UI (defaults to "Origin"/"Destination" if not set)
+  // Optional labels for UI (defaults to "Origin" if not set)
   ORIGIN_LABEL?: string;
-  DESTINATION_LABEL?: string;
 }
 
 // Direction type
 export type Direction = 'outbound' | 'inbound';
+
+// Route configuration
+export interface Route {
+  id: string;
+  label: string;
+  destination: string;
+  active?: boolean;  // defaults to true if not specified
+}
 
 // Database models
 export interface Trip {
@@ -29,6 +36,7 @@ export interface Trip {
   day_of_week: number;
   hour_local: number;
   is_holiday: number;
+  route_id: string;
 }
 
 export interface CollectionLog {
@@ -163,5 +171,6 @@ export interface QueryFilters {
   startDate: string | null;
   endDate: string | null;
   direction: Direction | null;
+  routeId: string | null;
   excludeHolidays: boolean;
 }

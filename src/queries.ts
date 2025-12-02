@@ -45,6 +45,11 @@ function buildWhereClause(filters: QueryFilters): {
     conditions.push("is_holiday = 0");
   }
 
+  if (filters.routeId) {
+    conditions.push("route_id = ?");
+    bindings.push(filters.routeId);
+  }
+
   const clause =
     conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return { clause, bindings };
@@ -401,14 +406,22 @@ export async function getHealthStatus(db: D1Database): Promise<HealthResponse> {
  */
 export async function getDateRange(
   db: D1Database,
+  routeId?: string | null,
 ): Promise<{ min: string | null; max: string | null }> {
+  const whereClause = routeId ? "WHERE route_id = ?" : "";
+  const bindings = routeId ? [routeId] : [];
+
+  const query = `
+    SELECT
+      MIN(date(measured_at_local)) as min_date,
+      MAX(date(measured_at_local)) as max_date
+    FROM trips
+    ${whereClause}
+  `;
+
   const result = await db
-    .prepare(
-      `SELECT
-        MIN(date(measured_at_local)) as min_date,
-        MAX(date(measured_at_local)) as max_date
-       FROM trips`,
-    )
+    .prepare(query)
+    .bind(...bindings)
     .first<{ min_date: string; max_date: string }>();
 
   return {
