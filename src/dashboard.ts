@@ -331,10 +331,10 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
                 <tr class="border-b border-slate-100 animate-row hover:bg-slate-50/50 transition-colors" style="animation-delay: ${i * 30}ms">
                   <td class="py-2 text-slate-600 relative-time" data-time="${m.measured_at_local}">${formatLocalTime(m.measured_at_local)}</td>
                   <td class="py-2 text-right">
-                    <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? Math.round(m.outbound_seconds / 60) + 'm' : '-'}</span>
+                    <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? formatDuration(m.outbound_seconds / 60) : '-'}</span>
                   </td>
                   <td class="py-2 text-right">
-                    <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? Math.round(m.inbound_seconds / 60) + 'm' : '-'}</span>
+                    <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? formatDuration(m.inbound_seconds / 60) : '-'}</span>
                   </td>
                 </tr>
               `
@@ -520,7 +520,7 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
         return h + ':' + (minute < 10 ? '0' : '') + minute + suffix;
       }
 
-      let html = '<div class="grid gap-1" style="grid-template-columns: 55px repeat(7, minmax(32px, 1fr));">';
+      let html = '<div class="grid gap-1" style="grid-template-columns: 55px repeat(7, minmax(52px, 1fr));">';
 
       // Header row
       html += '<div class="text-xs text-slate-500"></div>';
@@ -537,12 +537,12 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
           const item = data.find(d => d.day_of_week === day && d.hour === hour && d.minute === minute);
           if (item) {
             const colors = getColorClasses(item.avg_minutes);
-            const mins = Math.round(item.avg_minutes);
+            const duration = formatDurationHM(Math.round(item.avg_minutes));
             html += \`<button type="button"
               class="heatmap-cell \${colors.bg} \${colors.text} rounded text-center text-xs py-1 font-medium
                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              aria-label="\${dayNames[day]} at \${formatTimeSlot(slot)}: \${mins} minutes average, \${item.sample_count} samples">
-              \${mins}
+              aria-label="\${dayNames[day]} at \${formatTimeSlot(slot)}: \${duration} average, \${item.sample_count} samples">
+              \${duration}
             </button>\`;
           } else {
             html += '<div class="bg-slate-100 rounded text-center text-xs py-1 text-slate-400">-</div>';
@@ -607,11 +607,11 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-slate-500">\${originLabel} → \${destLabel}</span>
-              <span class="text-lg font-bold text-blue-600 font-mono">\${data.outbound ? data.outbound.duration_minutes + 'm' : 'N/A'}</span>
+              <span class="text-lg font-bold text-blue-600 font-mono">\${data.outbound ? formatDurationHM(data.outbound.duration_minutes) : 'N/A'}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-slate-500">\${destLabel} → \${originLabel}</span>
-              <span class="text-lg font-bold text-emerald-600 font-mono">\${data.inbound ? data.inbound.duration_minutes + 'm' : 'N/A'}</span>
+              <span class="text-lg font-bold text-emerald-600 font-mono">\${data.inbound ? formatDurationHM(data.inbound.duration_minutes) : 'N/A'}</span>
             </div>
           </div>
         \`;
@@ -692,6 +692,14 @@ export async function generateDashboard(env: Env, filters: QueryFilters): Promis
       }
       if (diffDays === 1) return 'yesterday';
       return diffDays + 'd ago';
+    }
+
+    // Format duration as hours and minutes
+    function formatDurationHM(totalMins) {
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      if (hrs > 0) return hrs + 'h ' + mins + 'm';
+      return mins + 'm';
     }
 
     function updateRelativeTimes() {
