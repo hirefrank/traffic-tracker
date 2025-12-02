@@ -96,10 +96,10 @@ database_name = "traffic-tracker"
 database_id = "your-database-id-here"
 ```
 
-### 3. Run the database migration
+### 3. Initialize the database
 
 ```bash
-npx wrangler d1 execute traffic-tracker --file=schema.sql --remote
+pnpm run db:init
 ```
 
 ### 4. Configure secrets
@@ -275,10 +275,10 @@ npx wrangler d1 create traffic-tracker
 
 Copy the new `database_id` into your `wrangler.toml`.
 
-### 3. Run the schema migration
+### 3. Initialize the database
 
 ```bash
-npx wrangler d1 execute traffic-tracker --file=schema.sql --remote
+pnpm run db:init
 ```
 
 ### 4. Set your secrets

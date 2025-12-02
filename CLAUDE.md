@@ -17,7 +17,7 @@ pnpm run deploy           # Deploy to Cloudflare Workers
 
 # Database
 pnpm run db:create        # Create D1 database (first time only)
-pnpm run db:migrate       # Run schema.sql on remote D1
+pnpm run db:init          # Initialize schema on remote D1 (first time only)
 
 # Routes Configuration
 pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
@@ -41,7 +41,7 @@ pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
 2. Dashboard request → `generateDashboard()` → queries aggregated data → renders HTML with embedded Chart.js
 3. API requests require Bearer token auth (except `/api/health` and `/api/current`)
 
-**Database Tables** (schema.sql)
+**Database Tables** (migrations/000-initial.sql)
 - `trips` - Travel measurements with timestamps, duration, route, day/hour metadata
 - `collection_log` - Tracks collection runs and errors
 

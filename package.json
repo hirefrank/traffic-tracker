@@ -1,15 +1,14 @@
 {
   "name": "traffic-tracker",
   "version": "1.0.0",
-  "description": "Cloudflare Worker that collects travel time estimates between Brooklyn and Westport, CT",
+  "description": "Cloudflare Worker that collects travel time estimates between multiple destinations using the Google Maps Directions API",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create traffic-tracker",
-    "db:migrate": "wrangler d1 execute traffic-tracker --file=schema.sql --remote",
-    "db:migrate:multi-route": "wrangler d1 execute traffic-tracker --remote --file=migrations/001-multi-route.sql",
+    "db:init": "wrangler d1 execute traffic-tracker --remote --file=migrations/000-initial.sql",
     "routes:push": "node scripts/push-routes.js"
   },
   "devDependencies": {
