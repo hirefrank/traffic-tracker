@@ -39,53 +39,58 @@ export default {
 
     try {
       // API routes
-      if (path === '/api/routes') {
+      if (path === '/traffic/api/routes') {
         return await handleApiRoutes(env);
       }
 
-      if (path === '/api/data') {
+      if (path === '/traffic/api/data') {
         return await handleApiData(request, env);
       }
 
-      if (path === '/api/export') {
+      if (path === '/traffic/api/export') {
         return await handleApiExport(request, env);
       }
 
-      if (path === '/api/health') {
+      if (path === '/traffic/api/health') {
         return await handleApiHealth(env);
       }
 
-      if (path === '/api/current') {
+      if (path === '/traffic/api/current') {
         const routeId = url.searchParams.get('routeId');
         return await handleApiCurrent(env, routeId);
       }
 
-      if (path === '/api/analytics') {
+      if (path === '/traffic/api/analytics') {
         return await handleApiAnalytics(request, env);
       }
 
-      if (path === '/api/predictions/generate') {
+      if (path === '/traffic/api/predictions/generate') {
         return await handleApiPredictionsGenerate(request, env);
       }
 
-      if (path === '/api/predictions/accuracy') {
+      if (path === '/traffic/api/predictions/accuracy') {
         return await handleApiPredictionsAccuracy(request, env);
       }
 
-      if (path === '/api/predictions/heatmap') {
+      if (path === '/traffic/api/predictions/heatmap') {
         return await handleApiPredictionsHeatmap(request, env);
       }
 
-      // Root redirect to first route
+      // Redirect root to /traffic (for workers.dev convenience)
       if (path === '/' || path === '/index.html') {
+        return Response.redirect(`${url.origin}/traffic${url.search}`, 302);
+      }
+
+      // Root redirect to first route
+      if (path === '/traffic' || path === '/traffic/' || path === '/traffic/index.html') {
         const routes = parseRoutes(env.ROUTES);
         const defaultRoute = getDefaultRoute(routes);
-        return Response.redirect(`${url.origin}/route/${defaultRoute.id}${url.search}`, 302);
+        return Response.redirect(`${url.origin}/traffic/route/${defaultRoute.id}${url.search}`, 302);
       }
 
       // Route-specific dashboard
-      if (path.startsWith('/route/')) {
-        const routeId = path.split('/')[2];
+      if (path.startsWith('/traffic/route/')) {
+        const routeId = path.split('/')[3];
 
         if (!routeId) {
           return new Response('Route ID required', { status: 400 });

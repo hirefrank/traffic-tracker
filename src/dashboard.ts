@@ -460,7 +460,7 @@ export async function generateDashboard(
         <div class="flex items-center justify-between gap-1.5 text-xs">
           <!-- Left: Route (compact) -->
           ${allRoutes.length > 1 ? `
-          <select id="routeSelect" onchange="window.location.href='/route/' + this.value + window.location.search"
+          <select id="routeSelect" onchange="window.location.href='/traffic/route/' + this.value + window.location.search"
             class="brutal-toolbar-select text-xs px-1 py-0.5 min-w-0">
             ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label.toUpperCase()}</option>`).join('')}
           </select>
@@ -500,7 +500,7 @@ export async function generateDashboard(
           <span class="text-lg font-bold tracking-wider">▓ TRAFFIC</span>
           <span class="text-brutal-yellow">│</span>
           ${allRoutes.length > 1 ? `
-          <select id="routeSelect" onchange="window.location.href='/route/' + this.value + window.location.search"
+          <select id="routeSelect" onchange="window.location.href='/traffic/route/' + this.value + window.location.search"
             class="brutal-toolbar-select">
             ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label.toUpperCase()}${r.active === false ? ' [ARCHIVED]' : ''}</option>`).join('')}
           </select>
@@ -804,7 +804,7 @@ export async function generateDashboard(
     function setGlobalDirection(direction) {
       const params = new URLSearchParams(window.location.search);
       params.set('direction', direction);
-      window.location.href = '/route/' + routeId + '?' + params.toString();
+      window.location.href = '/traffic/route/' + routeId + '?' + params.toString();
     }
 
     // Initialize interval chart - BRUTALIST STYLE
@@ -927,7 +927,7 @@ export async function generateDashboard(
       }
 
       try {
-        const res = await fetch('/api/current?routeId=' + routeId);
+        const res = await fetch('/traffic/api/current?routeId=' + routeId);
         const data = await res.json();
 
         if (data.error) {
@@ -982,11 +982,11 @@ export async function generateDashboard(
       if (direction) params.set('direction', direction);
       if (excludeHolidays) params.set('excludeHolidays', 'true');
 
-      window.location.href = '/route/' + routeId + '?' + params.toString();
+      window.location.href = '/traffic/route/' + routeId + '?' + params.toString();
     }
 
     function resetFilters() {
-      window.location.href = '/route/' + routeId;
+      window.location.href = '/traffic/route/' + routeId;
     }
 
     function setQuickFilter(type) {
@@ -1007,7 +1007,7 @@ export async function generateDashboard(
         params.set('excludeHolidays', 'true');
       }
 
-      window.location.href = '/route/' + routeId + '?' + params.toString();
+      window.location.href = '/traffic/route/' + routeId + '?' + params.toString();
     }
 
     function formatRelativeTime(isoString) {
@@ -1058,7 +1058,7 @@ export async function generateDashboard(
       try {
         const params = new URLSearchParams(window.location.search);
         params.set('routeId', routeId);
-        const url = '/api/analytics?' + params.toString();
+        const url = '/traffic/api/analytics?' + params.toString();
         console.log('Fetching analytics from:', url);
         const res = await fetch(url);
 
@@ -1248,7 +1248,7 @@ export async function generateDashboard(
 
         if (!predictionData) {
           try {
-            const res = await fetch('/api/predictions/heatmap?routeId=' + routeId + '&model=best_guess');
+            const res = await fetch('/traffic/api/predictions/heatmap?routeId=' + routeId + '&model=best_guess');
             const data = await res.json();
             predictionData = data.heatmap_data;
           } catch (error) {
