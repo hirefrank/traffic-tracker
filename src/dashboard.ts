@@ -998,13 +998,18 @@ export async function generateDashboard(
         weekAgo.setDate(weekAgo.getDate() - 7);
         params.set('startDate', weekAgo.toISOString().split('T')[0]);
         params.delete('endDate');
+        params.delete('excludeHolidays');
       } else if (type === 'month') {
         const monthAgo = new Date(now);
         monthAgo.setMonth(monthAgo.getMonth() - 1);
         params.set('startDate', monthAgo.toISOString().split('T')[0]);
         params.delete('endDate');
+        params.delete('excludeHolidays');
       } else if (type === 'weekdays') {
-        params.set('excludeHolidays', 'true');
+        params.delete('startDate');
+        params.delete('endDate');
+        params.delete('excludeHolidays');
+        params.set('weekdaysOnly', 'true');
       }
 
       window.location.href = '/traffic/route/' + routeId + '?' + params.toString();

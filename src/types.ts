@@ -84,6 +84,7 @@ export interface ApiDataResponse {
       endDate: string | null;
       direction: string | null;
       excludeHolidays: boolean;
+      weekdaysOnly: boolean;
     };
     total_samples: number;
   };
@@ -173,6 +174,7 @@ export interface QueryFilters {
   direction: Direction;  // Always set, defaults to 'outbound'
   routeId: string | null;
   excludeHolidays: boolean;
+  weekdaysOnly: boolean;
 }
 
 // Advanced analytics

@@ -22,6 +22,7 @@ export function parseFilters(url: URL): QueryFilters {
   const startDate = url.searchParams.get('startDate');
   const endDate = url.searchParams.get('endDate');
   const excludeHolidays = url.searchParams.get('excludeHolidays') === 'true';
+  const weekdaysOnly = url.searchParams.get('weekdaysOnly') === 'true';
   const routeId = url.searchParams.get('routeId');
 
   // Validate direction parameter at runtime, default to 'outbound'
@@ -35,6 +36,7 @@ export function parseFilters(url: URL): QueryFilters {
     direction,
     routeId,
     excludeHolidays,
+    weekdaysOnly,
   };
 }
 
@@ -94,6 +96,7 @@ export async function handleApiData(request: Request, env: Env): Promise<Respons
         endDate: filters.endDate,
         direction: filters.direction,
         excludeHolidays: filters.excludeHolidays,
+        weekdaysOnly: filters.weekdaysOnly,
       },
       total_samples: totalSamples,
     },
