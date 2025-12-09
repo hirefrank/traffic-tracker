@@ -2,6 +2,8 @@
 
 A Cloudflare Worker that collects travel time estimates between two locations using the Google Maps Directions API. It runs on a 15-minute cron schedule during configurable hours and provides a web dashboard for visualizing traffic patterns.
 
+**[View live demo →](https://hirefrank.com/traffic)**
+
 ## Features
 
 - Collects travel time data for both directions every 15 minutes
