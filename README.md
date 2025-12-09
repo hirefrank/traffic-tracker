@@ -8,10 +8,13 @@ A Cloudflare Worker that collects travel time estimates between two locations us
 
 - Collects travel time data for both directions every 15 minutes
 - Stores data in Cloudflare D1 (SQLite at the edge)
-- Web dashboard with Chart.js visualizations
+- Web dashboard with Chart.js visualizations and heatmaps
+- Advanced analytics (percentiles, variance, reliability metrics, traffic patterns)
+- Google Maps predictions integration for instant heatmaps (see [ANALYTICS.md](ANALYTICS.md))
 - REST API for data access and CSV export
 - Holiday detection (excludes US federal holidays from analysis)
 - Configurable collection window (default: 6am-9pm ET)
+- Multi-route support with YAML configuration
 
 ## Prerequisites
 
@@ -176,7 +179,13 @@ Visit your worker URL to see the traffic dashboard:
 - `/` - Redirects to the first route
 - `/route/{id}` - Dashboard for a specific route (e.g., `/route/work`)
 
-Each route has its own dashboard with travel time charts, heatmaps, and statistics.
+Each route has its own dashboard with:
+- Real-time travel time estimates
+- 15-minute interval line chart
+- Day/hour heatmap with actual data and predictions toggle
+- Advanced analytics (load on demand)
+- Best/worst time slots
+- Filter controls (date ranges, weekdays, holidays)
 
 ### API Endpoints
 
@@ -187,8 +196,12 @@ Each route has its own dashboard with travel time charts, heatmaps, and statisti
 | `GET /api/routes` | No | List of configured routes |
 | `GET /api/health` | No | Health check and stats |
 | `GET /api/current?routeId=xxx` | No | Current travel estimates for a route |
+| `GET /api/analytics?routeId=xxx` | No | Advanced analytics (percentiles, variance, patterns) |
 | `GET /api/data?routeId=xxx` | Yes | Aggregated traffic data (JSON) |
 | `GET /api/export?routeId=xxx` | Yes | Export route data (CSV) |
+| `POST /api/predictions/generate?routeId=xxx` | Yes | Generate prediction heatmap from Google Maps |
+| `GET /api/predictions/heatmap?routeId=xxx` | No | Get prediction-based heatmap data |
+| `GET /api/predictions/accuracy?routeId=xxx` | Yes | Get prediction accuracy stats |
 
 #### Authentication
 
@@ -201,20 +214,24 @@ curl -H "Authorization: Bearer YOUR_API_ACCESS_KEY" \
 
 #### Query Parameters
 
-The `/api/data` and `/api/export` endpoints support filters:
+The `/api/data`, `/api/export`, and `/api/analytics` endpoints support filters:
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
+| `routeId` | Filter by route ID | `work` |
 | `startDate` | Filter from date (ISO 8601) | `2024-01-01` |
 | `endDate` | Filter to date (ISO 8601) | `2024-12-31` |
 | `direction` | Filter by direction | `outbound` or `inbound` |
 | `excludeHolidays` | Exclude US federal holidays | `true` |
+| `weekdaysOnly` | Only include Mon-Fri | `true` |
 
 Example:
 ```bash
 curl -H "Authorization: Bearer YOUR_KEY" \
-  "https://your-worker.workers.dev/api/data?startDate=2024-06-01&excludeHolidays=true"
+  "https://your-worker.workers.dev/api/data?routeId=work&startDate=2024-06-01&weekdaysOnly=true"
 ```
+
+For detailed analytics documentation, see [ANALYTICS.md](ANALYTICS.md).
 
 ## Development
 
@@ -232,8 +249,10 @@ src/
 ├── index.ts        # Entry point: scheduled (cron) and fetch (HTTP) handlers
 ├── scheduled.ts    # Cron handler for data collection
 ├── api.ts          # REST API routes
-├── dashboard.ts    # Server-rendered HTML dashboard
-├── queries.ts      # D1 query builders
+├── dashboard.ts    # Server-rendered HTML dashboard with Chart.js
+├── queries.ts      # D1 query builders with filter support
+├── analytics.ts    # Advanced statistics (percentiles, variance, patterns)
+├── predictions.ts  # Google Maps predictions and accuracy tracking
 ├── maps-api.ts     # Google Maps Directions API client
 ├── holidays.ts     # US federal holiday detection
 └── types.ts        # TypeScript interfaces
