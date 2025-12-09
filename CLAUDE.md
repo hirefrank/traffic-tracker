@@ -106,3 +106,45 @@ Set manually via `wrangler secret put`:
 
 - `START_HOUR` / `END_HOUR` - Collection window (local time)
 - `TIMEZONE` - Default: America/New_York
+
+## UI Design System (Brutalist)
+
+The dashboard uses a brutalist design system with consistent patterns:
+
+### Color Palette
+- **Yellow (`#FFFF00`)** - Active states, highlights, emphasis
+- **Black (`#000`)** - Borders, text, backgrounds
+- **White** - Backgrounds, inactive states
+- **Green/Cyan/Orange/Red** - Heatmap gradient (fast → slow)
+
+### Active State Pattern
+All interactive controls use **yellow background** to indicate active/selected state:
+- Filter pills: `bg-brutal-yellow` when active, `bg-white` when inactive
+- Toggle buttons: Yellow = currently selected option
+- APPLY button: Yellow only when custom filters are set (not quick filters)
+
+Example:
+```typescript
+class="${isActive ? 'bg-brutal-yellow' : 'bg-white'}"
+```
+
+### CSS Classes
+- `brutal-card` - Main card container with black border
+- `brutal-btn` - Button base (black border, hover states)
+- `brutal-btn-active` - Active button variant (yellow background)
+- `brutal-pill` - Pill-shaped button for filters/toggles
+- `brutal-label` - Uppercase, bold, monospace labels
+- `brutal-input` - Form input with black border
+
+### Dashboard Structure
+1. **Sticky Toolbar** - Route selector, direction toggle (outbound/inbound)
+2. **Filter Form** - Date ranges, excludeHolidays checkbox, quick filters (THIS WEEK, THIS MONTH, WEEKDAYS)
+3. **Summary Cards** - Current estimate, analytics (load on demand)
+4. **Charts** - Line chart (15-min intervals), heatmap (day/hour with 30-min slots)
+5. **Data Source Toggle** - Dual-button for actual data vs predictions
+
+### Filter Behavior
+- Quick filters (week/month/weekdays) are **mutually exclusive**
+- Manual filters (APPLY form) clear quick filters when used
+- Direction toggle preserves all other filters
+- Yellow background shows which filtering method is active
