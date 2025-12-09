@@ -35,6 +35,32 @@ function formatDirection(direction: string, originLabel: string, destLabel: stri
   return direction === 'outbound' ? `${originLabel} → ${destLabel}` : `${destLabel} → ${originLabel}`;
 }
 
+/**
+ * Check if "This Week" filter is active (startDate is ~7 days ago, no endDate, no excludeHolidays, no weekdaysOnly)
+ */
+function isWeekFilter(filters: QueryFilters): boolean {
+  if (!filters.startDate || filters.endDate || filters.excludeHolidays || filters.weekdaysOnly) {
+    return false;
+  }
+  const startDate = new Date(filters.startDate);
+  const now = new Date();
+  const daysDiff = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  return daysDiff >= 6 && daysDiff <= 8; // Allow 1 day tolerance
+}
+
+/**
+ * Check if "This Month" filter is active (startDate is ~30 days ago, no endDate, no excludeHolidays, no weekdaysOnly)
+ */
+function isMonthFilter(filters: QueryFilters): boolean {
+  if (!filters.startDate || filters.endDate || filters.excludeHolidays || filters.weekdaysOnly) {
+    return false;
+  }
+  const startDate = new Date(filters.startDate);
+  const now = new Date();
+  const daysDiff = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  return daysDiff >= 28 && daysDiff <= 32; // Allow 2 day tolerance for month variations
+}
+
 export async function generateDashboard(
   env: Env,
   filters: QueryFilters,
@@ -582,15 +608,15 @@ export async function generateDashboard(
         </div>
         <div class="flex flex-wrap gap-2 pt-3 border-t-2 border-black md:border-0 md:pt-0 md:ml-auto">
           <button type="button" onclick="setQuickFilter('week')"
-            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            class="brutal-pill px-3 py-1.5 text-xs ${isWeekFilter(filters) ? 'bg-brutal-yellow' : 'bg-white'}">
             THIS WEEK
           </button>
           <button type="button" onclick="setQuickFilter('month')"
-            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            class="brutal-pill px-3 py-1.5 text-xs ${isMonthFilter(filters) ? 'bg-brutal-yellow' : 'bg-white'}">
             THIS MONTH
           </button>
           <button type="button" onclick="setQuickFilter('weekdays')"
-            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            class="brutal-pill px-3 py-1.5 text-xs ${filters.weekdaysOnly ? 'bg-brutal-yellow' : 'bg-white'}">
             WEEKDAYS
           </button>
         </div>
