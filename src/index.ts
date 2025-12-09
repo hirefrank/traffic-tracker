@@ -7,7 +7,18 @@
 
 import type { Env, QueryFilters, Direction } from './types';
 import { handleScheduled } from './scheduled';
-import { handleApiData, handleApiExport, handleApiHealth, handleApiCurrent, parseFilters, handleApiRoutes } from './api';
+import {
+  handleApiData,
+  handleApiExport,
+  handleApiHealth,
+  handleApiCurrent,
+  handleApiRoutes,
+  handleApiAnalytics,
+  handleApiPredictionsGenerate,
+  handleApiPredictionsAccuracy,
+  handleApiPredictionsHeatmap,
+  parseFilters,
+} from './api';
 import { generateDashboard } from './dashboard';
 import { parseRoutes, getRouteById, getDefaultRoute } from './routes';
 
@@ -47,6 +58,22 @@ export default {
       if (path === '/api/current') {
         const routeId = url.searchParams.get('routeId');
         return await handleApiCurrent(env, routeId);
+      }
+
+      if (path === '/api/analytics') {
+        return await handleApiAnalytics(request, env);
+      }
+
+      if (path === '/api/predictions/generate') {
+        return await handleApiPredictionsGenerate(request, env);
+      }
+
+      if (path === '/api/predictions/accuracy') {
+        return await handleApiPredictionsAccuracy(request, env);
+      }
+
+      if (path === '/api/predictions/heatmap') {
+        return await handleApiPredictionsHeatmap(request, env);
       }
 
       // Root redirect to first route

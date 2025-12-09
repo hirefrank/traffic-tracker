@@ -24,24 +24,35 @@ export class MapsApiError extends Error {
   }
 }
 
+export interface DirectionsOptions {
+  departureTime?: number | 'now'; // Unix timestamp or 'now'
+  trafficModel?: 'best_guess' | 'pessimistic' | 'optimistic';
+}
+
 /**
  * Fetch directions from Google Maps API
  * @param origin - Origin address
  * @param destination - Destination address
  * @param apiKey - Google Maps API key
+ * @param options - Optional parameters for predictions and traffic models
  * @returns Directions result with duration and distance
  */
 export async function fetchDirections(
   origin: string,
   destination: string,
-  apiKey: string
+  apiKey: string,
+  options: DirectionsOptions = {}
 ): Promise<DirectionsResult> {
   const params = new URLSearchParams({
     origin,
     destination,
-    departure_time: 'now',
+    departure_time: options.departureTime?.toString() ?? 'now',
     key: apiKey,
   });
+
+  if (options.trafficModel) {
+    params.set('traffic_model', options.trafficModel);
+  }
 
   const url = `${DIRECTIONS_API_URL}?${params.toString()}`;
 
@@ -92,6 +103,7 @@ export async function fetchDirections(
  * @param origin - Origin address
  * @param destination - Destination address
  * @param apiKey - Google Maps API key
+ * @param options - Optional parameters for predictions and traffic models
  * @param maxRetries - Maximum number of retries (default: 1)
  * @param retryDelayMs - Delay between retries in ms (default: 2000)
  * @returns Directions result
@@ -100,6 +112,7 @@ export async function fetchDirectionsWithRetry(
   origin: string,
   destination: string,
   apiKey: string,
+  options: DirectionsOptions = {},
   maxRetries = 1,
   retryDelayMs = 2000
 ): Promise<DirectionsResult> {
@@ -107,7 +120,7 @@ export async function fetchDirectionsWithRetry(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fetchDirections(origin, destination, apiKey);
+      return await fetchDirections(origin, destination, apiKey, options);
     } catch (error) {
       lastError = error as Error;
 

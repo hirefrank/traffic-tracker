@@ -1,5 +1,6 @@
 /**
  * Web Dashboard HTML Generation
+ * BRUTALIST DESIGN SYSTEM - Raw. Functional. Anti-corporate.
  */
 
 import type { Env, QueryFilters, Route } from './types';
@@ -67,19 +68,30 @@ export async function generateDashboard(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="refresh" content="900">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='12' width='24' height='12' rx='3' fill='%233b82f6'/><rect x='7' y='8' width='18' height='8' rx='2' fill='%233b82f6'/><circle cx='10' cy='24' r='3' fill='%231e3a5f'/><circle cx='22' cy='24' r='3' fill='%231e3a5f'/><rect x='9' y='10' width='6' height='4' rx='1' fill='%2393c5fd'/><rect x='17' y='10' width='6' height='4' rx='1' fill='%2393c5fd'/></svg>">
-  <title>Traffic Tracker - ${originLabel} ↔ ${destLabel}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><rect x='4' y='12' width='24' height='12' fill='%23FFFF00'/><rect x='7' y='8' width='18' height='8' fill='%23FFFF00'/><rect x='8' y='22' width='6' height='6' fill='%23000'/><rect x='18' y='22' width='6' height='6' fill='%23000'/></svg>">
+  <title>TRAFFIC TRACKER // ${originLabel.toUpperCase()} - ${destLabel.toUpperCase()}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['DM Sans', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace']
+            mono: ['Space Mono', 'monospace'],
+            heading: ['Bebas Neue', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            brutal: {
+              black: '#000000',
+              white: '#FFFFFF',
+              yellow: '#FFFF00',
+              red: '#FF0000',
+              blue: '#0000FF',
+              green: '#00FF00',
+              cyan: '#00FFFF'
+            }
           }
         }
       }
@@ -87,331 +99,686 @@ export async function generateDashboard(
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Heatmap cell interactions */
+    /* ========================================
+       BRUTALIST DESIGN SYSTEM
+       Raw. Functional. Anti-corporate.
+       ======================================== */
+
+    * {
+      -webkit-font-smoothing: none;
+    }
+
+    body {
+      font-family: 'Space Mono', monospace;
+      background: #FFFFFF;
+      color: #000000;
+    }
+
+    /* Brutalist Card - The foundation */
+    .brutal-card {
+      border: 3px solid #000;
+      box-shadow: 6px 6px 0 0 #000;
+      background: #fff;
+    }
+    .brutal-card-sm {
+      border: 2px solid #000;
+      box-shadow: 4px 4px 0 0 #000;
+      background: #fff;
+    }
+
+    /* Brutalist Button System */
+    .brutal-btn {
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0 0 #000;
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: 'Space Mono', monospace;
+    }
+    .brutal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 0 #000;
+    }
+    .brutal-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 0 #000;
+    }
+    .brutal-btn-active {
+      background: #000 !important;
+      color: #FFFF00 !important;
+    }
+    .brutal-btn-inactive {
+      background: #fff;
+      color: #000;
+    }
+    .brutal-btn-inactive:hover {
+      background: #FFFF00;
+    }
+
+    /* Brutalist Form Inputs */
+    .brutal-input {
+      border: 3px solid #000;
+      background: #fff;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+    .brutal-input:focus {
+      outline: none;
+      background: #FFFF00;
+    }
+
+    .brutal-checkbox {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #000;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+    }
+    .brutal-checkbox:checked {
+      background: #000;
+    }
+    .brutal-checkbox:checked::after {
+      content: '\\2713';
+      color: #FFFF00;
+      font-size: 14px;
+      font-weight: bold;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .brutal-checkbox:focus {
+      outline: 3px solid #FFFF00;
+      outline-offset: 2px;
+    }
+
+    .brutal-select {
+      border: 3px solid #000;
+      background: #fff;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      padding: 8px 32px 8px 12px;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 16px;
+    }
+    .brutal-select:focus {
+      outline: none;
+      background-color: #FFFF00;
+    }
+
+    /* Brutalist Section Headers */
+    .brutal-header {
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 4px solid #000;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* Heatmap cells - Brutalist */
     .heatmap-cell {
-      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
+      border: 2px solid #000 !important;
+      border-radius: 0 !important;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
     }
     .heatmap-cell:hover, .heatmap-cell:focus {
-      transform: scale(1.1);
+      transform: translate(-2px, -2px);
       z-index: 10;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      box-shadow: 4px 4px 0 0 #000;
     }
 
-    /* Scroll shadow indicators */
-    .scroll-shadow {
-      background:
-        linear-gradient(to right, white 30%, transparent),
-        linear-gradient(to left, white 30%, transparent),
-        linear-gradient(to right, rgba(0,0,0,0.08), transparent),
-        linear-gradient(to left, rgba(0,0,0,0.08), transparent);
-      background-position: left, right, left, right;
-      background-size: 30px 100%, 30px 100%, 15px 100%, 15px 100%;
-      background-repeat: no-repeat;
-      background-attachment: local, local, scroll, scroll;
+    /* Brutalist Table */
+    .brutal-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 3px solid #000;
+      width: 100%;
+    }
+    .brutal-table thead {
+      background: #000;
+      color: #FFFF00;
+    }
+    .brutal-table th {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px;
+      text-align: left;
+      border-bottom: 3px solid #000;
+    }
+    .brutal-table td {
+      padding: 12px;
+      border-bottom: 2px solid #000;
+    }
+    .brutal-table tbody tr:hover {
+      background: #FFFF00;
+    }
+    .brutal-table tbody tr:last-child td {
+      border-bottom: none;
     }
 
-    /* Skeleton animation */
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
+    /* Direction indicator arrow */
+    .direction-arrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: -0.1em;
+    }
+
+    /* Scroll container */
+    .brutal-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: #000 #fff;
+    }
+    .brutal-scroll::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    .brutal-scroll::-webkit-scrollbar-track {
+      background: #fff;
+      border: 2px solid #000;
+    }
+    .brutal-scroll::-webkit-scrollbar-thumb {
+      background: #000;
+      border: 2px solid #fff;
+    }
+
+    /* Skeleton - Brutalist version */
+    @keyframes brutalist-flash {
+      0%, 100% { background: #fff; }
+      50% { background: #000; }
     }
     .skeleton {
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
+      background: #e5e5e5;
+      border: 2px solid #000;
     }
 
-    /* Fade in animation for table rows */
+    /* Fade in animation */
     @keyframes fadeSlideIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .animate-row {
-      animation: fadeSlideIn 0.3s ease-out forwards;
+      animation: fadeSlideIn 0.2s ease-out forwards;
       opacity: 0;
     }
 
-    /* Live pulse */
-    @keyframes pulse-ring {
-      0% { transform: scale(0.8); opacity: 1; }
-      100% { transform: scale(2); opacity: 0; }
+    /* Live pulse - Brutalist square version */
+    @keyframes brutal-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.5); }
     }
-    .pulse-ring {
-      animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    .brutal-pulse {
+      animation: brutal-pulse 1s ease-in-out infinite;
+    }
+
+    /* Brutalist label */
+    .brutal-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #000;
+    }
+
+    /* Brutalist Color Backgrounds */
+    .bg-brutal-yellow { background: #FFFF00 !important; }
+    .bg-brutal-red { background: #FF0000 !important; }
+    .bg-brutal-green { background: #00FF00 !important; }
+    .bg-brutal-cyan { background: #00FFFF !important; }
+
+    /* Quick filter pills - Brutalist */
+    .brutal-pill {
+      border: 2px solid #000;
+      box-shadow: 3px 3px 0 0 #000;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
+    }
+    .brutal-pill:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 0 #000;
+      background: #FFFF00;
+    }
+    .brutal-pill:active {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 0 #000;
+    }
+
+    /* Archived route banner */
+    .brutal-warning {
+      background: #FFFF00;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0 0 #000;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 640px) {
+      .brutal-btn {
+        border-width: 2px;
+        box-shadow: 3px 3px 0 0 #000;
+      }
+      .brutal-btn:hover {
+        box-shadow: 4px 4px 0 0 #000;
+      }
+      .brutal-card {
+        border-width: 2px;
+        box-shadow: 4px 4px 0 0 #000;
+      }
+      .brutal-card-sm {
+        box-shadow: 3px 3px 0 0 #000;
+      }
+      .brutal-header {
+        border-bottom-width: 3px;
+      }
+      .brutal-table {
+        border-width: 2px;
+      }
+      .brutal-table th,
+      .brutal-table td {
+        padding: 8px;
+      }
+    }
+
+    /* Chart container styling */
+    .brutal-chart-container {
+      border: 3px solid #000;
+      background: #fff;
+      padding: 16px;
+    }
+
+    /* Sticky Toolbar - Brutalist Command Bar */
+    .brutal-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #000;
+      color: #FFFF00;
+      border-bottom: 4px solid #000;
+      box-shadow: 0 4px 0 0 #000;
+    }
+    .brutal-toolbar.scrolled {
+      box-shadow: 0 8px 0 0 #000;
+    }
+    .brutal-toolbar-btn {
+      border: 2px solid #FFFF00;
+      background: #000;
+      color: #FFFF00;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.05s ease;
+    }
+    .brutal-toolbar-btn:hover {
+      background: #FFFF00;
+      color: #000;
+    }
+    .brutal-toolbar-btn-active {
+      background: #FFFF00;
+      color: #000;
+      border-color: #000;
+    }
+    .brutal-toolbar-select {
+      border: 2px solid #FFFF00;
+      background: #000;
+      color: #FFFF00;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    .brutal-toolbar-select option {
+      background: #000;
+      color: #FFFF00;
     }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 font-sans">
-  <div class="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
-    <!-- Header -->
-    <header class="mb-6 sm:mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Traffic Tracker</h1>
-      <p class="text-slate-600">
-        ${originLabel} → ${allRoutes.length > 1 ? `
-        <select id="routeSelect" onchange="window.location.href='/route/' + this.value + window.location.search"
-          class="inline-block border-b border-slate-400 bg-transparent text-slate-600
-                 focus:outline-none focus:border-blue-500 cursor-pointer
-                 appearance-none pr-5 bg-no-repeat bg-right"
-          style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2364748b%22 stroke-width=%222%22><path d=%22M6 9l6 6 6-6%22/></svg>');">
-          ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label}${r.active === false ? ' (archived)' : ''}</option>`).join('')}
-        </select>
-        ` : destLabel} Travel Times
-      </p>
-      <p class="text-sm text-slate-500 mt-1">All times displayed in Eastern Time (ET)</p>
-      ${!isActiveRoute ? `
-      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
-        <span class="font-medium">Archived Route:</span> This route is no longer collecting new data. Showing historical data only.
-      </div>
-      ` : ''}
-    </header>
+<body class="min-h-screen bg-white font-mono">
+  <!-- STICKY BRUTALIST TOOLBAR -->
+  <div class="brutal-toolbar" id="brutalToolbar">
+    <div class="container mx-auto px-4 max-w-7xl">
+      <!-- Mobile Layout: Single Line -->
+      <div class="sm:hidden py-2">
+        <div class="flex items-center justify-between gap-1.5 text-xs">
+          <!-- Left: Route (compact) -->
+          ${allRoutes.length > 1 ? `
+          <select id="routeSelect" onchange="window.location.href='/route/' + this.value + window.location.search"
+            class="brutal-toolbar-select text-xs px-1 py-0.5 min-w-0">
+            ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label.toUpperCase()}</option>`).join('')}
+          </select>
+          ` : `<span class="font-bold whitespace-nowrap">${destLabel.toUpperCase()}</span>`}
 
-    <!-- Filters -->
-    <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 mb-6 transition-shadow hover:shadow-md">
+          <!-- Center: Direction Controls (compact) -->
+          <div class="flex items-center gap-1" role="radiogroup" aria-label="Select travel direction">
+            <button
+              type="button"
+              id="globalDirOutbound"
+              onclick="setGlobalDirection('outbound')"
+              role="radio"
+              aria-checked="${filters.direction === 'outbound' ? 'true' : 'false'}"
+              class="brutal-toolbar-btn text-xs px-2 py-0.5 ${filters.direction === 'outbound' ? 'brutal-toolbar-btn-active' : ''}">
+              OUTBOUND
+            </button>
+            <button
+              type="button"
+              id="globalDirInbound"
+              onclick="setGlobalDirection('inbound')"
+              role="radio"
+              aria-checked="${filters.direction === 'inbound' ? 'true' : 'false'}"
+              class="brutal-toolbar-btn text-xs px-2 py-0.5 ${filters.direction === 'inbound' ? 'brutal-toolbar-btn-active' : ''}">
+              INBOUND
+            </button>
+          </div>
+
+          <!-- Right: Timezone -->
+          <span class="font-bold tracking-wider whitespace-nowrap">ET</span>
+        </div>
+      </div>
+
+      <!-- Desktop Layout: Horizontal -->
+      <div class="hidden sm:flex items-center justify-between py-3 gap-4">
+        <!-- Left: Branding + Route -->
+        <div class="flex items-center gap-3">
+          <span class="text-lg font-bold tracking-wider">▓ TRAFFIC</span>
+          <span class="text-brutal-yellow">│</span>
+          ${allRoutes.length > 1 ? `
+          <select id="routeSelect" onchange="window.location.href='/route/' + this.value + window.location.search"
+            class="brutal-toolbar-select">
+            ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label.toUpperCase()}${r.active === false ? ' [ARCHIVED]' : ''}</option>`).join('')}
+          </select>
+          ` : `<span class="font-bold">${destLabel.toUpperCase()}</span>`}
+          ${!isActiveRoute ? `<span class="text-brutal-red font-bold text-sm">[ARCHIVED]</span>` : ''}
+        </div>
+
+        <!-- Center: Direction Controls -->
+        <div class="flex items-center gap-2" role="radiogroup" aria-label="Select travel direction">
+          <button
+            type="button"
+            id="globalDirOutbound"
+            onclick="setGlobalDirection('outbound')"
+            role="radio"
+            aria-checked="${filters.direction === 'outbound' ? 'true' : 'false'}"
+            class="brutal-toolbar-btn ${filters.direction === 'outbound' ? 'brutal-toolbar-btn-active' : ''}">
+            OUTBOUND
+          </button>
+          <button
+            type="button"
+            id="globalDirInbound"
+            onclick="setGlobalDirection('inbound')"
+            role="radio"
+            aria-checked="${filters.direction === 'inbound' ? 'true' : 'false'}"
+            class="brutal-toolbar-btn ${filters.direction === 'inbound' ? 'brutal-toolbar-btn-active' : ''}">
+            INBOUND
+          </button>
+        </div>
+
+        <!-- Right: Timezone -->
+        <div class="flex items-center gap-2">
+          <span class="text-brutal-yellow">│</span>
+          <span class="text-xs font-bold tracking-wider">ET</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-6 max-w-7xl">
+
+    <!-- Filters - Brutalist -->
+    <div class="brutal-card p-4 mb-6">
+      <div class="brutal-header text-lg">FILTERS</div>
       <form id="filterForm" class="space-y-4 md:space-y-0 md:flex md:flex-wrap md:gap-4 md:items-end">
         <div class="grid grid-cols-2 gap-4 md:contents">
           <div>
-            <label for="startDate" class="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+            <label for="startDate" class="brutal-label block mb-2">START DATE</label>
             <input type="date" name="startDate" id="startDate"
               value="${filters.startDate || ''}"
               min="${dateRange.min || ''}"
               max="${dateRange.max || ''}"
-              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm
-                     focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
-                     transition-colors">
+              class="brutal-input w-full">
           </div>
           <div>
-            <label for="endDate" class="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+            <label for="endDate" class="brutal-label block mb-2">END DATE</label>
             <input type="date" name="endDate" id="endDate"
               value="${filters.endDate || ''}"
               min="${dateRange.min || ''}"
               max="${dateRange.max || ''}"
-              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm
-                     focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
-                     transition-colors">
+              class="brutal-input w-full">
           </div>
         </div>
-        <div>
-          <label for="direction" class="block text-sm font-medium text-slate-700 mb-1">Direction</label>
-          <select name="direction" id="direction"
-            class="w-full md:w-auto border border-slate-300 rounded-lg px-3 py-2 text-sm
-                   focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
-                   transition-colors">
-            <option value="">Both</option>
-            <option value="outbound" ${filters.direction === 'outbound' ? 'selected' : ''}>${originShort} → ${destShort}</option>
-            <option value="inbound" ${filters.direction === 'inbound' ? 'selected' : ''}>${destShort} → ${originShort}</option>
-          </select>
-        </div>
-        <div class="flex items-center">
+        <input type="hidden" name="direction" id="direction" value="${filters.direction || 'outbound'}">
+        <div class="flex items-center gap-3">
           <input type="checkbox" name="excludeHolidays" id="excludeHolidays"
             ${filters.excludeHolidays ? 'checked' : ''}
-            class="w-4 h-4 rounded border-slate-300 text-blue-600
-                   focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0
-                   transition-colors cursor-pointer">
-          <label for="excludeHolidays" class="ml-2 text-sm text-slate-700 cursor-pointer">Exclude Holidays</label>
+            class="brutal-checkbox">
+          <label for="excludeHolidays" class="brutal-label cursor-pointer">EXCLUDE HOLIDAYS</label>
         </div>
         <div class="flex gap-2">
           <button type="submit"
-            class="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium
-                   transition-all duration-150 ease-out
-                   hover:bg-blue-700 hover:shadow-md
-                   active:scale-[0.98] active:shadow-sm
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-            Apply
+            class="brutal-btn brutal-btn-inactive bg-brutal-yellow px-6 py-2 text-sm">
+            APPLY
           </button>
           <button type="button" onclick="resetFilters()"
-            class="flex-1 md:flex-none bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium
-                   transition-all duration-150 ease-out
-                   hover:bg-slate-200
-                   active:scale-[0.98]
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-            Reset
+            class="brutal-btn brutal-btn-inactive px-6 py-2 text-sm">
+            RESET
           </button>
         </div>
-        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 md:border-0 md:pt-0 md:ml-auto">
+        <div class="flex flex-wrap gap-2 pt-3 border-t-2 border-black md:border-0 md:pt-0 md:ml-auto">
           <button type="button" onclick="setQuickFilter('week')"
-            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-600
-                   transition-all duration-150
-                   hover:bg-slate-200 hover:text-slate-800
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-            This Week
+            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            THIS WEEK
           </button>
           <button type="button" onclick="setQuickFilter('month')"
-            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-600
-                   transition-all duration-150
-                   hover:bg-slate-200 hover:text-slate-800
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-            This Month
+            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            THIS MONTH
           </button>
           <button type="button" onclick="setQuickFilter('weekdays')"
-            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-600
-                   transition-all duration-150
-                   hover:bg-slate-200 hover:text-slate-800
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-            Weekdays Only
+            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            WEEKDAYS
           </button>
         </div>
       </form>
     </div>
 
-    <!-- Summary Cards -->
+    <!-- Summary Cards - Brutalist -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <!-- Current Estimate -->
-      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5
-                  transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-        <h3 class="text-sm font-medium text-slate-500 mb-2">Current Estimate</h3>
+      <div class="brutal-card p-4 sm:p-5">
+        <div class="brutal-header text-base">CURRENT ESTIMATE</div>
         <div id="currentEstimate">
           <div class="space-y-2">
             <div class="flex justify-between items-center">
-              <div class="h-4 w-24 skeleton rounded"></div>
-              <div class="h-6 w-16 skeleton rounded"></div>
-            </div>
-            <div class="flex justify-between items-center">
-              <div class="h-4 w-24 skeleton rounded"></div>
-              <div class="h-6 w-16 skeleton rounded"></div>
+              <div class="h-4 w-24 skeleton"></div>
+              <div class="h-6 w-16 skeleton"></div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Best Times -->
-      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5
-                  transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-        <h3 class="text-sm font-medium text-slate-500 mb-2">Best Times (Fastest)</h3>
+      <div class="brutal-card p-4 sm:p-5">
+        <div class="brutal-header text-base flex items-center gap-2">
+          <span class="text-2xl">&#9650;</span> BEST TIMES
+        </div>
         ${
           bestWorst.best.length > 0
-            ? `<ul class="space-y-1">
+            ? `<ul class="space-y-2">
             ${bestWorst.best
               .map(
                 (slot) => `
-              <li class="text-sm">
-                <span class="font-semibold text-emerald-600">${formatDuration(slot.avg_minutes)}</span>
-                <span class="text-slate-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
-                <span class="text-slate-500 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
+              <li class="flex justify-between items-center border-b-2 border-black pb-2 last:border-0 last:pb-0">
+                <span class="brutal-label">${DAY_NAMES[slot.day_of_week].toUpperCase()} ${formatTime(slot.hour).toUpperCase()}</span>
+                <span class="font-bold text-lg bg-brutal-green px-2 py-1 border-2 border-black">${formatDuration(slot.avg_minutes)}</span>
               </li>
             `
               )
               .join('')}
           </ul>`
-            : '<p class="text-slate-500 text-sm">Not enough data yet</p>'
+            : '<p class="brutal-label text-center py-4">NO DATA YET</p>'
         }
       </div>
 
       <!-- Worst Times -->
-      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5
-                  transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-        <h3 class="text-sm font-medium text-slate-500 mb-2">Worst Times (Slowest)</h3>
+      <div class="brutal-card p-4 sm:p-5">
+        <div class="brutal-header text-base flex items-center gap-2">
+          <span class="text-2xl">&#9660;</span> WORST TIMES
+        </div>
         ${
           bestWorst.worst.length > 0
-            ? `<ul class="space-y-1">
+            ? `<ul class="space-y-2">
             ${bestWorst.worst
               .map(
                 (slot) => `
-              <li class="text-sm">
-                <span class="font-semibold text-red-600">${formatDuration(slot.avg_minutes)}</span>
-                <span class="text-slate-600">- ${DAY_NAMES[slot.day_of_week]} ${formatTime(slot.hour)}</span>
-                <span class="text-slate-500 text-xs">(${formatDirection(slot.direction, originShort, destShort)})</span>
+              <li class="flex justify-between items-center border-b-2 border-black pb-2 last:border-0 last:pb-0">
+                <span class="brutal-label">${DAY_NAMES[slot.day_of_week].toUpperCase()} ${formatTime(slot.hour).toUpperCase()}</span>
+                <span class="font-bold text-lg bg-brutal-red text-white px-2 py-1 border-2 border-black">${formatDuration(slot.avg_minutes)}</span>
               </li>
             `
               )
               .join('')}
           </ul>`
-            : '<p class="text-slate-500 text-sm">Not enough data yet</p>'
+            : '<p class="brutal-label text-center py-4">NO DATA YET</p>'
         }
       </div>
     </div>
 
-    <!-- Charts and Recent -->
+    <!-- Charts and Recent - Brutalist -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Hourly Average Chart -->
-      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">Average Duration</h3>
-        <div class="h-48 sm:h-64 lg:h-72" role="img" aria-label="Line chart showing average travel duration by hour of day">
+      <div class="brutal-card p-4 sm:p-5">
+        <div class="brutal-header text-lg">AVG DURATION BY TIME</div>
+        <div class="brutal-chart-container h-48 sm:h-64 lg:h-72" role="img" aria-label="Line chart showing average travel duration by hour of day">
           <canvas id="hourlyChart"></canvas>
         </div>
       </div>
 
       <!-- Recent Measurements -->
-      <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">Recent Measurements</h3>
+      <div class="brutal-card p-4 sm:p-5">
+        <div class="brutal-header text-lg">RECENT MEASUREMENTS</div>
         ${
           recentPaired.length > 0
             ? `
-        <div class="overflow-y-auto" style="max-height: 18rem;">
-          <table class="w-full">
-            <thead class="sticky top-0 bg-white">
-              <tr class="text-xs text-slate-500 border-b border-slate-200">
-                <th class="text-left py-2 font-medium">Time (ET)</th>
-                <th class="text-right py-2 font-medium"><span class="hidden sm:inline">${originShort} </span>→ ${destShort}</th>
-                <th class="text-right py-2 font-medium"><span class="hidden sm:inline">${destShort} </span>→ ${originShort}</th>
+        <div class="overflow-y-auto brutal-scroll" style="max-height: 18rem;">
+          <table class="brutal-table">
+            <thead>
+              <tr>
+                <th>TIME (ET)</th>
+                <th class="text-right">DURATION</th>
               </tr>
             </thead>
-            <tbody class="text-sm">
+            <tbody>
               ${recentPaired
                 .map(
-                  (m, i) => `
-                <tr class="border-b border-slate-100 animate-row hover:bg-slate-50/50 transition-colors" style="animation-delay: ${i * 30}ms">
-                  <td class="py-2 text-slate-600 relative-time" data-time="${m.measured_at_local}">${formatLocalTime(m.measured_at_local)}</td>
-                  <td class="py-2 text-right">
-                    <span class="font-semibold text-blue-600 font-mono">${m.outbound_seconds ? formatDuration(m.outbound_seconds / 60) : '-'}</span>
-                  </td>
-                  <td class="py-2 text-right">
-                    <span class="font-semibold text-emerald-600 font-mono">${m.inbound_seconds ? formatDuration(m.inbound_seconds / 60) : '-'}</span>
+                  (m, i) => {
+                    const duration = filters.direction === 'inbound' ? m.inbound_seconds : m.outbound_seconds;
+                    return duration ? `
+                <tr class="animate-row" style="animation-delay: ${i * 30}ms">
+                  <td class="relative-time brutal-label" data-time="${m.measured_at_local}">${formatLocalTime(m.measured_at_local)}</td>
+                  <td class="text-right">
+                    <span class="font-bold bg-white px-2 py-1 border-2 border-black">${formatDuration(duration / 60)}</span>
                   </td>
                 </tr>
-              `
+              ` : '';
+                  }
                 )
                 .join('')}
             </tbody>
           </table>
         </div>
         `
-            : '<p class="text-slate-500 text-sm">No measurements yet</p>'
+            : '<p class="brutal-label text-center py-8">NO MEASUREMENTS YET</p>'
         }
       </div>
     </div>
 
-    <!-- Heatmap -->
-    <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/50 p-4 sm:p-5 mb-6">
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-        <h3 class="text-lg font-semibold text-slate-800">Day Heatmap</h3>
-        <div class="flex gap-2" role="tablist" aria-label="Select direction for heatmap">
-          <button onclick="switchHeatmap('outbound')" id="heatmapBtnOutbound" role="tab" aria-selected="true"
-            class="px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white
-                   transition-all duration-150
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-            ${originShort} → ${destShort}
-          </button>
-          <button onclick="switchHeatmap('inbound')" id="heatmapBtnInbound" role="tab" aria-selected="false"
-            class="px-3 py-1.5 text-sm rounded-lg font-medium bg-slate-100 text-slate-600
-                   transition-all duration-150
-                   hover:bg-slate-200
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-            ${destShort} → ${originShort}
-          </button>
+    <!-- Analytics Section - Brutalist -->
+    <div id="analyticsSection" class="brutal-card p-6 mb-6 bg-brutal-yellow" style="background: #FFFF00;">
+      <div class="brutal-header text-xl flex items-center gap-3" style="border-color: #000;">
+        <span class="text-3xl">[*]</span> ADVANCED ANALYTICS
+      </div>
+      <div id="analyticsContent">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <!-- Reliability Card -->
+          <div class="brutal-card-sm p-4">
+            <h4 class="brutal-label mb-3 border-b-2 border-black pb-2">RELIABILITY</h4>
+            <div id="reliabilityStats" class="space-y-2"></div>
+          </div>
+          <!-- Traffic Patterns Card -->
+          <div class="brutal-card-sm p-4">
+            <h4 class="brutal-label mb-3 border-b-2 border-black pb-2">TRAFFIC PATTERNS</h4>
+            <div id="trafficPatterns" class="space-y-2"></div>
+          </div>
+          <!-- Statistical Summary Card -->
+          <div class="brutal-card-sm p-4">
+            <h4 class="brutal-label mb-3 border-b-2 border-black pb-2">STATISTICS</h4>
+            <div id="statisticalSummary" class="space-y-2"></div>
+          </div>
+        </div>
+        <!-- Hourly Variance Chart -->
+        <div class="brutal-card-sm p-4">
+          <h4 class="brutal-label mb-3 border-b-2 border-black pb-2">MOST UNPREDICTABLE HOURS</h4>
+          <div class="brutal-chart-container h-64">
+            <canvas id="varianceChart"></canvas>
+          </div>
         </div>
       </div>
-      <div id="heatmapContainer" class="overflow-x-auto scroll-shadow -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div id="heatmap" class="min-w-max transition-opacity duration-200" role="grid" aria-label="Heatmap showing travel times by day and hour"></div>
-      </div>
-      <div class="flex justify-center items-center gap-2 mt-4 text-xs text-slate-500">
-        <span>Faster</span>
-        <div class="w-4 h-4 bg-emerald-500 rounded"></div>
-        <div class="w-4 h-4 bg-emerald-300 rounded"></div>
-        <div class="w-4 h-4 bg-yellow-300 rounded"></div>
-        <div class="w-4 h-4 bg-orange-400 rounded"></div>
-        <div class="w-4 h-4 bg-red-500 rounded"></div>
-        <span>Slower</span>
+      <div id="analyticsLoading" class="hidden text-center py-8">
+        <div class="inline-block w-8 h-8 bg-black brutal-pulse"></div>
+        <p class="brutal-label mt-2">ANALYZING DATA...</p>
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-500">
-      ${totalSamples.toLocaleString()} measurements ${formatDateRange(dateRange.min, dateRange.max)} &middot;
-      <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer"
-         class="text-slate-600 hover:text-slate-800 transition-colors
-                focus-visible:outline-none focus-visible:underline">
-        View on GitHub
-      </a>
+    <!-- Heatmap - Brutalist -->
+    <div class="brutal-card p-4 sm:p-5 mb-6">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+        <div class="brutal-header text-lg mb-0" style="border: none; padding: 0;">DAY // HOUR HEATMAP</div>
+        <button onclick="toggleDataSource()" id="dataSourceToggle"
+          class="brutal-btn brutal-btn-inactive px-3 py-1.5 text-xs">
+          ACTUAL DATA
+        </button>
+      </div>
+      <div id="heatmapContainer" class="overflow-x-auto brutal-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div id="heatmap" class="min-w-max" role="grid" aria-label="Heatmap showing travel times by day and hour"></div>
+      </div>
+      <div class="flex justify-center items-center gap-2 mt-4">
+        <span class="brutal-label">FAST</span>
+        <div class="w-5 h-5 bg-brutal-green border-2 border-black"></div>
+        <div class="w-5 h-5 bg-brutal-cyan border-2 border-black"></div>
+        <div class="w-5 h-5 bg-brutal-yellow border-2 border-black"></div>
+        <div class="w-5 h-5 bg-orange-500 border-2 border-black"></div>
+        <div class="w-5 h-5 bg-brutal-red border-2 border-black"></div>
+        <span class="brutal-label">SLOW</span>
+      </div>
+    </div>
+
+    <!-- Footer - Brutalist -->
+    <footer class="mt-8 pt-4 border-t-4 border-black">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-2">
+        <p class="brutal-label">
+          ${totalSamples.toLocaleString()} MEASUREMENTS ${formatDateRange(dateRange.min, dateRange.max).toUpperCase()}
+        </p>
+        <a href="https://github.com/hirefrank/traffic-tracker" target="_blank" rel="noopener noreferrer"
+           class="brutal-btn brutal-btn-inactive px-4 py-2 text-xs">
+          VIEW ON GITHUB &#8599;
+        </a>
+      </div>
     </footer>
   </div>
 
@@ -424,66 +791,82 @@ export async function generateDashboard(
     const routeId = '${currentRoute.id}';
     const isActiveRoute = ${isActiveRoute};
 
-    // Initialize interval chart (15-minute intervals)
+    // Global direction state
+    const globalDirection = '${filters.direction || 'outbound'}';
+
+    // Brutalist Chart.js defaults
+    Chart.defaults.font.family = "'Space Mono', monospace";
+    Chart.defaults.font.weight = 'bold';
+    Chart.defaults.color = '#000';
+    Chart.defaults.borderColor = '#000';
+
+    // Set global direction
+    function setGlobalDirection(direction) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('direction', direction);
+      window.location.href = '/route/' + routeId + '?' + params.toString();
+    }
+
+    // Initialize interval chart - BRUTALIST STYLE
     function initIntervalChart() {
       const ctx = document.getElementById('hourlyChart').getContext('2d');
+      const filteredData = intervalData.filter(d => d.direction === globalDirection);
+      const timeSlots = [...new Set(filteredData.map(d => d.hour * 60 + d.minute))].sort((a, b) => a - b);
 
-      // Get unique time slots sorted by hour then minute
-      const timeSlots = [...new Set(intervalData.map(d => d.hour * 60 + d.minute))].sort((a, b) => a - b);
-
-      const outboundData = timeSlots.map(slot => {
+      const chartData = timeSlots.map(slot => {
         const hour = Math.floor(slot / 60);
         const minute = slot % 60;
-        const item = intervalData.find(d => d.hour === hour && d.minute === minute && d.direction === 'outbound');
-        return item ? item.avg_minutes : null;
-      });
-      const inboundData = timeSlots.map(slot => {
-        const hour = Math.floor(slot / 60);
-        const minute = slot % 60;
-        const item = intervalData.find(d => d.hour === hour && d.minute === minute && d.direction === 'inbound');
+        const item = filteredData.find(d => d.hour === hour && d.minute === minute);
         return item ? item.avg_minutes : null;
       });
 
-      // Format time slot labels (show hour only at :00, otherwise just show time)
       const labels = timeSlots.map(slot => {
         const hour = Math.floor(slot / 60);
         const minute = slot % 60;
-        if (minute === 0) {
-          return formatHour(hour);
-        }
-        // For non-zero minutes, show shorter format
+        if (minute === 0) return formatHour(hour);
         const h = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
         return h + ':' + (minute < 10 ? '0' : '') + minute;
       });
+
+      // Brutalist colors - blue for all directions
+      const chartColor = '#0000FF';
+      const chartBgColor = 'rgba(0, 0, 255, 0.2)';
+      const chartLabel = globalDirection === 'outbound'
+        ? originLabel.toUpperCase() + ' >>> ' + destLabel.toUpperCase()
+        : destLabel.toUpperCase() + ' >>> ' + originLabel.toUpperCase();
 
       new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels,
-          datasets: [
-            {
-              label: originLabel + ' → ' + destLabel,
-              data: outboundData,
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.3,
-              fill: true,
-            },
-            {
-              label: destLabel + ' → ' + originLabel,
-              data: inboundData,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              tension: 0.3,
-              fill: true,
-            },
-          ],
+          datasets: [{
+            label: chartLabel,
+            data: chartData,
+            borderColor: chartColor,
+            backgroundColor: chartBgColor,
+            tension: 0,  // Sharp lines, no curves
+            fill: true,
+            borderWidth: 3,
+            pointBackgroundColor: '#000',
+            pointBorderColor: chartColor,
+            pointBorderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          }],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom' },
+            legend: {
+              display: true,
+              labels: {
+                font: { weight: 'bold', size: 11 },
+                boxWidth: 20,
+                boxHeight: 3,
+                padding: 15,
+              }
+            },
           },
           scales: {
             x: {
@@ -492,130 +875,52 @@ export async function generateDashboard(
                 minRotation: 0,
                 autoSkip: true,
                 maxTicksLimit: 12,
+                font: { weight: 'bold' },
               },
+              grid: {
+                color: '#000',
+                lineWidth: 1,
+              },
+              border: {
+                color: '#000',
+                width: 3,
+              }
             },
             y: {
               beginAtZero: false,
-              title: { display: true, text: 'Minutes' },
+              title: {
+                display: true,
+                text: 'MINUTES',
+                font: { weight: 'bold', size: 11 },
+              },
+              grid: {
+                color: '#000',
+                lineWidth: 1,
+              },
+              border: {
+                color: '#000',
+                width: 3,
+              },
+              ticks: {
+                font: { weight: 'bold' },
+              }
             },
           },
         },
       });
     }
 
-    // Initialize heatmap
-    let currentHeatmapDirection = 'outbound';
-
-    function initHeatmap(direction) {
-      const container = document.getElementById('heatmap');
-      const data = dayIntervalData.filter(d => d.direction === direction);
-
-      if (data.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-sm py-8 text-center">Not enough data for heatmap</p>';
-        return;
-      }
-
-      const days = [0, 1, 2, 3, 4, 5, 6];
-      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-      // Get unique time slots (hour * 60 + minute) sorted
-      const timeSlots = [...new Set(data.map(d => d.hour * 60 + d.minute))].sort((a, b) => a - b);
-
-      // Calculate quartiles for coloring
-      const allValues = data.map(d => d.avg_minutes).sort((a, b) => a - b);
-      const q1 = allValues[Math.floor(allValues.length * 0.25)] || 0;
-      const q2 = allValues[Math.floor(allValues.length * 0.5)] || 0;
-      const q3 = allValues[Math.floor(allValues.length * 0.75)] || 0;
-
-      function getColorClasses(value) {
-        if (value <= q1) return { bg: 'bg-emerald-500', text: 'text-white' };
-        if (value <= q2) return { bg: 'bg-emerald-300', text: 'text-slate-800' };
-        if (value <= q3) return { bg: 'bg-yellow-300', text: 'text-slate-800' };
-        if (value <= q3 + (q3 - q2)) return { bg: 'bg-orange-400', text: 'text-white' };
-        return { bg: 'bg-red-500', text: 'text-white' };
-      }
-
-      function formatTimeSlot(slot) {
-        const hour = Math.floor(slot / 60);
-        const minute = slot % 60;
-        const h = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-        const suffix = hour < 12 ? 'a' : 'p';
-        return h + ':' + (minute < 10 ? '0' : '') + minute + suffix;
-      }
-
-      let html = '<div class="grid gap-1" style="grid-template-columns: 55px repeat(7, minmax(52px, 1fr));">';
-
-      // Header row
-      html += '<div class="text-xs text-slate-500"></div>';
-      for (const day of days) {
-        html += \`<div class="text-xs text-slate-500 text-center font-medium py-1">\${dayNames[day]}</div>\`;
-      }
-
-      // Data rows
-      for (const slot of timeSlots) {
-        const hour = Math.floor(slot / 60);
-        const minute = slot % 60;
-        html += \`<div class="text-xs text-slate-500 text-right pr-2 py-1">\${formatTimeSlot(slot)}</div>\`;
-        for (const day of days) {
-          const item = data.find(d => d.day_of_week === day && d.hour === hour && d.minute === minute);
-          if (item) {
-            const colors = getColorClasses(item.avg_minutes);
-            const duration = formatDurationHM(Math.round(item.avg_minutes));
-            html += \`<button type="button"
-              class="heatmap-cell \${colors.bg} \${colors.text} rounded text-center text-xs py-1 font-medium
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              aria-label="\${dayNames[day]} at \${formatTimeSlot(slot)}: \${duration} average, \${item.sample_count} samples">
-              \${duration}
-            </button>\`;
-          } else {
-            html += '<div class="bg-slate-100 rounded text-center text-xs py-1 text-slate-400">-</div>';
-          }
-        }
-      }
-
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    function switchHeatmap(direction) {
-      const container = document.getElementById('heatmap');
-      const btnOutbound = document.getElementById('heatmapBtnOutbound');
-      const btnInbound = document.getElementById('heatmapBtnInbound');
-
-      // Fade out
-      container.style.opacity = '0';
-
-      setTimeout(() => {
-        currentHeatmapDirection = direction;
-        initHeatmap(direction);
-
-        // Update button styles and ARIA
-        if (direction === 'outbound') {
-          btnOutbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
-          btnOutbound.setAttribute('aria-selected', 'true');
-          btnInbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-slate-100 text-slate-600 transition-all duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
-          btnInbound.setAttribute('aria-selected', 'false');
-        } else {
-          btnOutbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-slate-100 text-slate-600 transition-all duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
-          btnOutbound.setAttribute('aria-selected', 'false');
-          btnInbound.className = 'px-3 py-1.5 text-sm rounded-lg font-medium bg-blue-600 text-white transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
-          btnInbound.setAttribute('aria-selected', 'true');
-        }
-
-        // Fade in
-        container.style.opacity = '1';
-      }, 150);
-    }
-
-    // Load current estimate
+    // Load current estimate - BRUTALIST STYLE
     async function loadCurrentEstimate() {
       const container = document.getElementById('currentEstimate');
 
       if (!isActiveRoute) {
         container.innerHTML = \`
-          <div class="text-sm text-slate-500">
-            <p class="text-amber-600 font-medium mb-2">Route archived</p>
-            <p>No live data - this route is no longer collecting measurements.</p>
+          <div class="text-center py-4">
+            <div class="brutal-warning inline-block px-4 py-2 mb-2">
+              <span class="brutal-label">ARCHIVED</span>
+            </div>
+            <p class="brutal-label">NO LIVE DATA</p>
           </div>
         \`;
         return;
@@ -626,40 +931,37 @@ export async function generateDashboard(
         const data = await res.json();
 
         if (data.error) {
-          container.innerHTML = '<span class="text-red-500 text-sm">Unable to load</span>';
+          container.innerHTML = '<div class="bg-brutal-red text-white border-2 border-black px-4 py-2"><span class="brutal-label">ERROR LOADING</span></div>';
           return;
         }
 
+        const currentData = globalDirection === 'outbound' ? data.outbound : data.inbound;
+        const dirLabel = globalDirection === 'outbound'
+          ? originLabel.toUpperCase() + ' >>> ' + destLabel.toUpperCase()
+          : destLabel.toUpperCase() + ' >>> ' + originLabel.toUpperCase();
+
         container.innerHTML = \`
-          <div class="space-y-2">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="relative flex h-2.5 w-2.5">
-                <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-              <span class="text-xs text-emerald-600 font-medium">Live</span>
+          <div class="space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 bg-brutal-yellow brutal-pulse border-2 border-black"></span>
+              <span class="brutal-label">LIVE</span>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-slate-500">\${originLabel} → \${destLabel}</span>
-              <span class="text-lg font-bold text-blue-600 font-mono">\${data.outbound ? formatDurationHM(data.outbound.duration_minutes) : 'N/A'}</span>
+            <div class="text-center py-3 bg-white border-3 border-black" style="border-width: 3px;">
+              <span class="text-4xl font-bold font-mono">\${currentData ? formatDurationHM(currentData.duration_minutes) : 'N/A'}</span>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-slate-500">\${destLabel} → \${originLabel}</span>
-              <span class="text-lg font-bold text-emerald-600 font-mono">\${data.inbound ? formatDurationHM(data.inbound.duration_minutes) : 'N/A'}</span>
-            </div>
+            <div class="brutal-label text-center">\${dirLabel}</div>
           </div>
         \`;
       } catch (e) {
-        container.innerHTML = '<span class="text-red-500 text-sm">Unable to load</span>';
+        container.innerHTML = '<div class="bg-brutal-red text-white border-2 border-black px-4 py-2"><span class="brutal-label">ERROR LOADING</span></div>';
       }
     }
 
-    // Utility functions
     function formatHour(hour) {
-      if (hour === 0) return '12am';
-      if (hour === 12) return '12pm';
-      if (hour < 12) return hour + 'am';
-      return (hour - 12) + 'pm';
+      if (hour === 0) return '12AM';
+      if (hour === 12) return '12PM';
+      if (hour < 12) return hour + 'AM';
+      return (hour - 12) + 'PM';
     }
 
     // Filter handling
@@ -708,7 +1010,6 @@ export async function generateDashboard(
       window.location.href = '/route/' + routeId + '?' + params.toString();
     }
 
-    // Format relative time
     function formatRelativeTime(isoString) {
       const date = new Date(isoString);
       const now = new Date();
@@ -718,20 +1019,19 @@ export async function generateDashboard(
       const diffDays = Math.floor(diffHours / 24);
       const remainingMins = diffMins % 60;
 
-      if (diffMins < 1) return 'just now';
-      if (diffMins < 60) return diffMins + 'm ago';
+      if (diffMins < 1) return 'JUST NOW';
+      if (diffMins < 60) return diffMins + 'M AGO';
       if (diffHours < 24) {
-        if (remainingMins === 0) return diffHours + 'h ago';
-        return diffHours + 'h ' + remainingMins + 'm ago';
+        if (remainingMins === 0) return diffHours + 'H AGO';
+        return diffHours + 'H ' + remainingMins + 'M AGO';
       }
-      if (diffDays === 1) return 'yesterday';
-      return diffDays + 'd ago';
+      if (diffDays === 1) return 'YESTERDAY';
+      return diffDays + 'D AGO';
     }
 
-    // Format duration as hours and minutes
     function formatDurationHM(totalMins) {
       const hrs = Math.floor(totalMins / 60);
-      const mins = totalMins % 60;
+      const mins = Math.round(totalMins % 60);
       if (hrs > 0) return hrs + 'h ' + mins + 'm';
       return mins + 'm';
     }
@@ -745,11 +1045,313 @@ export async function generateDashboard(
       });
     }
 
-    // Initialize on load
+    // Analytics
+    let analyticsData = null;
+    let varianceChartInstance = null;
+    let currentDataSource = 'actual';
+    let predictionData = null;
+
+    async function loadAnalytics() {
+      const loading = document.getElementById('analyticsLoading');
+      loading.classList.remove('hidden');
+
+      try {
+        const params = new URLSearchParams(window.location.search);
+        params.set('routeId', routeId);
+        const url = '/api/analytics?' + params.toString();
+        console.log('Fetching analytics from:', url);
+        const res = await fetch(url);
+
+        console.log('Analytics response status:', res.status);
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Analytics error response:', errorText);
+          throw new Error('API returned ' + res.status + ': ' + res.statusText);
+        }
+
+        analyticsData = await res.json();
+        console.log('Analytics data loaded:', analyticsData);
+        renderAnalytics();
+      } catch (error) {
+        console.error('Analytics error:', error);
+        document.getElementById('analyticsContent').innerHTML =
+          '<div class="brutal-card-sm p-4 text-center"><span class="brutal-label">FAILED TO LOAD ANALYTICS: ' + error.message + '</span></div>';
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+
+    function renderAnalytics() {
+      if (!analyticsData) return;
+
+      // Reliability Stats - BRUTALIST
+      const reliabilityMetrics = analyticsData.reliability_metrics || [];
+      const directionReliability = reliabilityMetrics
+        .filter(m => m.direction === globalDirection && m.confidence_level >= 80)
+        .slice(0, 5);
+
+      let reliabilityHtml = '';
+
+      if (directionReliability.length > 0) {
+        reliabilityHtml = directionReliability.map(m => \`
+          <div class="flex justify-between items-center text-sm mb-2 border-b border-black pb-2 last:border-0">
+            <span class="brutal-label">\${m.confidence_level}% OF TRIPS</span>
+            <span class="font-bold bg-white px-2 py-1 border-2 border-black">&lt; \${formatDurationHM(m.duration_minutes)}</span>
+          </div>
+        \`).join('');
+      }
+
+      document.getElementById('reliabilityStats').innerHTML = reliabilityHtml || '<p class="brutal-label text-center py-2">NOT ENOUGH DATA</p>';
+
+      // Traffic Patterns - BRUTALIST (5-color gradient like heatmap)
+      const trafficPatterns = analyticsData.traffic_patterns || [];
+      const patternsHtml = trafficPatterns
+        .map(p => {
+          const colors = {
+            very_fast: 'bg-brutal-green',
+            fast: 'bg-brutal-cyan',
+            moderate: 'bg-brutal-yellow',
+            slow: 'bg-orange-500',
+            very_slow: 'bg-brutal-red text-white'
+          };
+          return \`
+            <div class="flex items-center gap-2 text-sm mb-2">
+              <div class="w-4 h-4 \${colors[p.pattern_type]} border-2 border-black"></div>
+              <span class="brutal-label flex-1">\${p.pattern_type.toUpperCase().replace(/_/g, ' ')}</span>
+              <span class="font-bold">\${p.percentage}%</span>
+            </div>
+          \`;
+        }).join('');
+      document.getElementById('trafficPatterns').innerHTML = patternsHtml || '<p class="brutal-label text-center py-2">NOT ENOUGH DATA</p>';
+
+      // Statistical Summary - BRUTALIST
+      const statSummary = analyticsData.statistical_summary || [];
+      const directionStats = statSummary.find(s => s.direction === globalDirection);
+
+      if (directionStats) {
+        const summaryHtml = \`
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between border-b border-black pb-2">
+              <span class="brutal-label">MEDIAN (P50)</span>
+              <span class="font-bold">\${formatDurationHM(directionStats.median_minutes)}</span>
+            </div>
+            <div class="flex justify-between border-b border-black pb-2">
+              <span class="brutal-label">P90</span>
+              <span class="font-bold">\${formatDurationHM(directionStats.p90_minutes)}</span>
+            </div>
+            <div class="flex justify-between border-b border-black pb-2">
+              <span class="brutal-label">STD DEV</span>
+              <span class="font-bold">\${formatDurationHM(directionStats.std_dev_minutes)}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="brutal-label">VARIABILITY</span>
+              <span class="font-bold">\${(directionStats.coefficient_of_variation * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        \`;
+        document.getElementById('statisticalSummary').innerHTML = summaryHtml;
+      } else {
+        document.getElementById('statisticalSummary').innerHTML = '<p class="brutal-label text-center py-2">NOT ENOUGH DATA</p>';
+      }
+
+      renderVarianceChart();
+    }
+
+    function renderVarianceChart() {
+      if (!analyticsData || !analyticsData.hourly_variance) return;
+
+      const ctx = document.getElementById('varianceChart').getContext('2d');
+      const variance = analyticsData.hourly_variance
+        .filter(v => v.direction === globalDirection)
+        .slice(0, 10);
+
+      if (varianceChartInstance) {
+        varianceChartInstance.destroy();
+      }
+
+      const barColor = '#0000FF';  // Blue for all directions
+
+      varianceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: variance.map(v => formatHour(v.hour)),
+          datasets: [{
+            label: 'STD DEVIATION (MIN)',
+            data: variance.map(v => v.std_dev_minutes),
+            backgroundColor: variance.map(v =>
+              v.coefficient_of_variation > 0.3 ? '#FF0000' :
+              v.coefficient_of_variation > 0.2 ? '#FFA500' : barColor
+            ),
+            borderColor: '#000',
+            borderWidth: 3,
+            borderRadius: 0,  // Sharp corners
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'HIGHER BARS = MORE UNPREDICTABLE',
+              font: { weight: 'bold', size: 11 },
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: '#000',
+                lineWidth: 1,
+              },
+              border: {
+                color: '#000',
+                width: 3,
+              },
+              ticks: {
+                font: { weight: 'bold' },
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'STD DEV (MIN)',
+                font: { weight: 'bold', size: 11 },
+              },
+              grid: {
+                color: '#000',
+                lineWidth: 1,
+              },
+              border: {
+                color: '#000',
+                width: 3,
+              },
+              ticks: {
+                font: { weight: 'bold' },
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Prediction data toggle - BRUTALIST
+    async function toggleDataSource() {
+      const toggle = document.getElementById('dataSourceToggle');
+
+      if (currentDataSource === 'actual') {
+        toggle.innerHTML = 'PREDICTIONS';
+        toggle.classList.remove('brutal-btn-inactive');
+        toggle.classList.add('brutal-btn-active');
+        currentDataSource = 'predictions';
+
+        if (!predictionData) {
+          try {
+            const res = await fetch('/api/predictions/heatmap?routeId=' + routeId + '&model=best_guess');
+            const data = await res.json();
+            predictionData = data.heatmap_data;
+          } catch (error) {
+            alert('FAILED TO LOAD PREDICTIONS');
+            toggleDataSource();
+            return;
+          }
+        }
+      } else {
+        toggle.innerHTML = 'ACTUAL DATA';
+        toggle.classList.remove('brutal-btn-active');
+        toggle.classList.add('brutal-btn-inactive');
+        currentDataSource = 'actual';
+      }
+
+      initHeatmap(globalDirection, currentDataSource === 'predictions' ? predictionData : null);
+    }
+
+    // Heatmap - BRUTALIST
+    function initHeatmap(direction, customData) {
+      const container = document.getElementById('heatmap');
+      const data = customData || dayIntervalData.filter(d => d.direction === direction);
+
+      if (data.length === 0) {
+        container.innerHTML = '<p class="brutal-label py-8 text-center">NOT ENOUGH DATA FOR HEATMAP</p>';
+        return;
+      }
+
+      const days = [0, 1, 2, 3, 4, 5, 6];
+      const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const timeSlots = [...new Set(data.map(d => d.hour * 60 + d.minute))].sort((a, b) => a - b);
+
+      const allValues = data.map(d => d.avg_minutes).sort((a, b) => a - b);
+      const q1 = allValues[Math.floor(allValues.length * 0.25)] || 0;
+      const q2 = allValues[Math.floor(allValues.length * 0.5)] || 0;
+      const q3 = allValues[Math.floor(allValues.length * 0.75)] || 0;
+
+      function getColorClasses(value) {
+        if (value <= q1) return { bg: 'bg-brutal-green', text: 'text-black' };
+        if (value <= q2) return { bg: 'bg-brutal-cyan', text: 'text-black' };
+        if (value <= q3) return { bg: 'bg-brutal-yellow', text: 'text-black' };
+        if (value <= q3 + (q3 - q2)) return { bg: 'bg-orange-500', text: 'text-black' };
+        return { bg: 'bg-brutal-red', text: 'text-white' };
+      }
+
+      function formatTimeSlot(slot) {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        const h = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        const suffix = hour < 12 ? 'A' : 'P';
+        return h + ':' + (minute < 10 ? '0' : '') + minute + suffix;
+      }
+
+      let html = '<div class="grid gap-1" style="grid-template-columns: 60px repeat(7, minmax(52px, 1fr));">';
+
+      // Header row
+      html += '<div class="brutal-label text-xs"></div>';
+      for (const day of days) {
+        html += \`<div class="brutal-label text-xs text-center py-2 bg-black text-brutal-yellow border-2 border-black">\${dayNames[day]}</div>\`;
+      }
+
+      // Data rows
+      for (const slot of timeSlots) {
+        const hour = Math.floor(slot / 60);
+        const minute = slot % 60;
+        html += \`<div class="brutal-label text-xs text-right pr-2 py-2 bg-black text-brutal-yellow border-2 border-black">\${formatTimeSlot(slot)}</div>\`;
+        for (const day of days) {
+          const item = data.find(d => d.day_of_week === day && d.hour === hour && d.minute === minute);
+          if (item) {
+            const colors = getColorClasses(item.avg_minutes);
+            const duration = formatDurationHM(Math.round(item.avg_minutes));
+            html += \`<button type="button"
+              class="heatmap-cell \${colors.bg} \${colors.text} text-center text-xs py-2 font-bold
+                     focus:outline-none focus:ring-2 focus:ring-brutal-blue focus:ring-offset-2"
+              aria-label="\${dayNames[day]} at \${formatTimeSlot(slot)}: \${duration} average, \${item.sample_count} samples">
+              \${duration}
+            </button>\`;
+          } else {
+            html += '<div class="bg-gray-200 border-2 border-black text-center text-xs py-2 font-bold text-gray-500">-</div>';
+          }
+        }
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // Toolbar scroll effect
+    window.addEventListener('scroll', function() {
+      const toolbar = document.getElementById('brutalToolbar');
+      if (window.scrollY > 0) {
+        toolbar.classList.add('scrolled');
+      } else {
+        toolbar.classList.remove('scrolled');
+      }
+    });
+
+    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       initIntervalChart();
-      initHeatmap('outbound');
+      initHeatmap(globalDirection);
       loadCurrentEstimate();
+      loadAnalytics();
       updateRelativeTimes();
     });
   </script>
@@ -765,7 +1367,7 @@ function formatLocalTime(isoString: string): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
-  });
+  }).toUpperCase();
 }
 
 function formatDateRange(min: string | null, max: string | null): string {
