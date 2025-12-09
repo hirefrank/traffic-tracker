@@ -12,6 +12,10 @@ head_sampling_rate = 1.0
 pattern = "hirefrank.com/traffic*"
 zone_name = "hirefrank.com"
 
+[[routes]]
+pattern = "www.hirefrank.com/traffic*"
+zone_name = "hirefrank.com"
+
 [triggers]
 crons = ["*/15 * * * *"]
 
@@ -24,4 +28,3 @@ database_id = "54e9edee-507a-4171-ab4f-ab2f06a19d5c"
 START_HOUR = "6"
 END_HOUR = "21"
 TIMEZONE = "America/New_York"
-
