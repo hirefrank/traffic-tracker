@@ -790,10 +790,16 @@ export async function generateDashboard(
     <div class="brutal-card p-4 sm:p-5 mb-6">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <div class="brutal-header text-lg mb-0" style="border: none; padding: 0;">DAY // HOUR HEATMAP</div>
-        <button onclick="toggleDataSource()" id="dataSourceToggle"
-          class="brutal-btn brutal-btn-inactive px-3 py-1.5 text-xs">
-          ACTUAL DATA
-        </button>
+        <div class="flex gap-2">
+          <button onclick="setDataSource('actual')" id="actualDataBtn"
+            class="brutal-pill px-3 py-1.5 text-xs bg-brutal-yellow">
+            ACTUAL DATA
+          </button>
+          <button onclick="setDataSource('predictions')" id="predictionsBtn"
+            class="brutal-pill px-3 py-1.5 text-xs bg-white">
+            PREDICTIONS
+          </button>
+        </div>
       </div>
       <div id="heatmapContainer" class="overflow-x-auto brutal-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
         <div id="heatmap" class="min-w-max" role="grid" aria-label="Heatmap showing travel times by day and hour"></div>
@@ -1284,16 +1290,16 @@ export async function generateDashboard(
       });
     }
 
-    // Prediction data toggle - BRUTALIST
-    async function toggleDataSource() {
-      const toggle = document.getElementById('dataSourceToggle');
+    // Prediction data toggle - BRUTALIST (dual button radio style)
+    async function setDataSource(source) {
+      // Don't do anything if clicking the already active button
+      if (currentDataSource === source) return;
 
-      if (currentDataSource === 'actual') {
-        toggle.innerHTML = 'PREDICTIONS';
-        toggle.classList.remove('brutal-btn-inactive');
-        toggle.classList.add('brutal-btn-active');
-        currentDataSource = 'predictions';
+      const actualBtn = document.getElementById('actualDataBtn');
+      const predictionsBtn = document.getElementById('predictionsBtn');
 
+      if (source === 'predictions') {
+        // Switching to predictions
         if (!predictionData) {
           try {
             const res = await fetch('/traffic/api/predictions/heatmap?routeId=' + routeId + '&model=best_guess');
@@ -1301,15 +1307,22 @@ export async function generateDashboard(
             predictionData = data.heatmap_data;
           } catch (error) {
             alert('FAILED TO LOAD PREDICTIONS');
-            toggleDataSource();
             return;
           }
         }
+
+        currentDataSource = 'predictions';
+        actualBtn.classList.remove('bg-brutal-yellow');
+        actualBtn.classList.add('bg-white');
+        predictionsBtn.classList.remove('bg-white');
+        predictionsBtn.classList.add('bg-brutal-yellow');
       } else {
-        toggle.innerHTML = 'ACTUAL DATA';
-        toggle.classList.remove('brutal-btn-active');
-        toggle.classList.add('brutal-btn-inactive');
+        // Switching to actual
         currentDataSource = 'actual';
+        predictionsBtn.classList.remove('bg-brutal-yellow');
+        predictionsBtn.classList.add('bg-white');
+        actualBtn.classList.remove('bg-white');
+        actualBtn.classList.add('bg-brutal-yellow');
       }
 
       initHeatmap(globalDirection, currentDataSource === 'predictions' ? predictionData : null);
