@@ -29,10 +29,12 @@ pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
 
 - `src/index.ts` - Entry point: exports `scheduled` (cron) and `fetch` (HTTP) handlers
 - `src/scheduled.ts` - Cron handler that collects travel data for both directions every 15 min
-- `src/api.ts` - HTTP API routes (`/api/data`, `/api/export`, `/api/health`, `/api/current`)
+- `src/api.ts` - HTTP API routes (`/api/data`, `/api/export`, `/api/health`, `/api/current`, `/api/analytics`, `/api/predictions/*`)
 - `src/dashboard.ts` - Server-rendered HTML dashboard with Chart.js visualizations
 - `src/queries.ts` - D1 query builders with filter support (date range, direction, holidays)
-- `src/maps-api.ts` - Google Maps Directions API client with retry logic
+- `src/analytics.ts` - Advanced statistical analysis (percentiles, variance, traffic patterns, reliability metrics)
+- `src/predictions.ts` - Google Maps prediction generation and accuracy tracking
+- `src/maps-api.ts` - Google Maps Directions API client with retry logic and prediction support
 - `src/holidays.ts` - US federal holiday detection (computed dynamically, cached per year)
 - `src/types.ts` - TypeScript interfaces for Env bindings, DB models, and API responses
 
@@ -41,9 +43,20 @@ pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
 2. Dashboard request → `generateDashboard()` → queries aggregated data → renders HTML with embedded Chart.js
 3. API requests require Bearer token auth (except `/api/health` and `/api/current`)
 
-**Database Tables** (migrations/000-initial.sql)
-- `trips` - Travel measurements with timestamps, duration, route, day/hour metadata
-- `collection_log` - Tracks collection runs and errors
+**Database Tables**
+- `trips` (migrations/000-initial.sql) - Travel measurements with timestamps, duration, route, day/hour metadata
+- `collection_log` (migrations/000-initial.sql) - Tracks collection runs and errors
+- `predictions` (migrations/001-predictions.sql) - Google Maps predictions for accuracy tracking and instant heatmaps
+- `prediction_accuracy` (view) - Pre-calculated accuracy metrics joining predictions with actuals
+
+## Advanced Features
+
+See [ANALYTICS.md](ANALYTICS.md) for comprehensive documentation on:
+- **Instant Heatmap Generation** - Create full week visualization for new routes without waiting for data
+- **Prediction Accuracy Tracking** - Compare Google's predictions vs actual measurements
+- **Advanced Statistical Analysis** - Percentiles, variance, traffic patterns, reliability metrics
+- **Traffic Model Variations** - Optimistic/pessimistic bounds for confidence intervals
+- **Cost Optimization** - Determine if actual collection is worth it vs using predictions
 
 ## Environment Configuration
 

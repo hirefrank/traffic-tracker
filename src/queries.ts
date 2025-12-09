@@ -36,10 +36,9 @@ function buildWhereClause(filters: QueryFilters): {
     bindings.push(`${filters.endDate}T23:59:59`);
   }
 
-  if (filters.direction) {
-    conditions.push("direction = ?");
-    bindings.push(filters.direction);
-  }
+  // Direction is always set (defaults to 'outbound')
+  conditions.push("direction = ?");
+  bindings.push(filters.direction);
 
   if (filters.excludeHolidays) {
     conditions.push("is_holiday = 0");
@@ -261,8 +260,33 @@ export async function getRecentPairedMeasurements(
   limit = 6,
 ): Promise<PairedMeasurement[]> {
   // Build WHERE clause without direction filter for pairing
-  const pairFilters = { ...filters, direction: null };
-  const { clause, bindings } = buildWhereClause(pairFilters);
+  // Manually exclude direction from conditions
+  const conditions: string[] = [];
+  const bindings: unknown[] = [];
+
+  if (filters.startDate) {
+    conditions.push("measured_at_local >= ?");
+    bindings.push(`${filters.startDate}T00:00:00`);
+  }
+
+  if (filters.endDate) {
+    conditions.push("measured_at_local <= ?");
+    bindings.push(`${filters.endDate}T23:59:59`);
+  }
+
+  // Skip direction filter to get both directions
+
+  if (filters.excludeHolidays) {
+    conditions.push("is_holiday = 0");
+  }
+
+  if (filters.routeId) {
+    conditions.push("route_id = ?");
+    bindings.push(filters.routeId);
+  }
+
+  const clause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const query = `
     SELECT
@@ -292,7 +316,7 @@ export async function getRecentPairedMeasurements(
 export async function getBestWorstSlots(
   db: D1Database,
   filters: QueryFilters,
-  minSamples = 5,
+  minSamples = 3,
 ): Promise<{ best: BestWorstSlot[]; worst: BestWorstSlot[] }> {
   const { clause, bindings } = buildWhereClause(filters);
 

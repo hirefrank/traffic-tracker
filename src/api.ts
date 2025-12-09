@@ -24,12 +24,10 @@ export function parseFilters(url: URL): QueryFilters {
   const excludeHolidays = url.searchParams.get('excludeHolidays') === 'true';
   const routeId = url.searchParams.get('routeId');
 
-  // Validate direction parameter at runtime
+  // Validate direction parameter at runtime, default to 'outbound'
   const directionParam = url.searchParams.get('direction');
-  const direction: Direction | null =
-    directionParam === 'outbound' || directionParam === 'inbound'
-      ? directionParam
-      : null;
+  const direction: Direction =
+    directionParam === 'inbound' ? 'inbound' : 'outbound';
 
   return {
     startDate,
@@ -267,4 +265,236 @@ export async function handleApiRoutes(env: Env): Promise<Response> {
   return new Response(JSON.stringify(routes), {
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+/**
+ * Handle /api/analytics endpoint - advanced statistical analysis
+ * Public endpoint (no auth required) for dashboard consumption
+ */
+export async function handleApiAnalytics(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const filters = parseFilters(url);
+
+  const {
+    getStatisticalSummary,
+    getHourlyVariance,
+    getTrafficPatterns,
+    getReliabilityMetrics,
+  } = await import('./analytics');
+
+  const [stats, variance, patterns, reliability] = await Promise.all([
+    getStatisticalSummary(env.DB, filters),
+    getHourlyVariance(env.DB, filters),
+    getTrafficPatterns(env.DB, filters),
+    getReliabilityMetrics(env.DB, filters),
+  ]);
+
+  return new Response(
+    JSON.stringify(
+      {
+        statistical_summary: stats,
+        hourly_variance: variance,
+        traffic_patterns: patterns,
+        reliability_metrics: reliability,
+      },
+      null,
+      2
+    ),
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+}
+
+/**
+ * Handle /api/predictions/generate endpoint - generate predictions for instant heatmap
+ */
+export async function handleApiPredictionsGenerate(request: Request, env: Env): Promise<Response> {
+  if (!verifyAuth(request, env.API_ACCESS_KEY)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const url = new URL(request.url);
+  const routeId = url.searchParams.get('routeId');
+  const type = url.searchParams.get('type') || 'week'; // 'week' or 'daily'
+
+  if (!routeId) {
+    return new Response(JSON.stringify({ error: 'routeId parameter required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const routes = parseRoutes(env.ROUTES);
+  const route = routes.find((r) => r.id === routeId);
+
+  if (!route) {
+    return new Response(JSON.stringify({ error: 'Route not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const { generateWeekPredictions, generateDailyPredictions, storePredictions } = await import(
+      './predictions'
+    );
+
+    const predictions =
+      type === 'daily'
+        ? await generateDailyPredictions(
+            env.ORIGIN,
+            route.destination,
+            routeId,
+            env.GOOGLE_MAPS_API_KEY,
+            env.TIMEZONE
+          )
+        : await generateWeekPredictions(
+            env.ORIGIN,
+            route.destination,
+            routeId,
+            env.GOOGLE_MAPS_API_KEY,
+            env.TIMEZONE
+          );
+
+    await storePredictions(env.DB, predictions, new Date(), env.TIMEZONE);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        predictions_generated: predictions.length,
+        route_id: routeId,
+        type,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: 'Failed to generate predictions',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+}
+
+/**
+ * Handle /api/predictions/accuracy endpoint - get prediction accuracy stats
+ */
+export async function handleApiPredictionsAccuracy(request: Request, env: Env): Promise<Response> {
+  if (!verifyAuth(request, env.API_ACCESS_KEY)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const url = new URL(request.url);
+  const routeId = url.searchParams.get('routeId');
+  const trafficModel = (url.searchParams.get('model') || 'best_guess') as
+    | 'best_guess'
+    | 'pessimistic'
+    | 'optimistic';
+
+  if (!routeId) {
+    return new Response(JSON.stringify({ error: 'routeId parameter required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const { getPredictionAccuracy, linkPredictionsToActuals } = await import('./predictions');
+
+    // First, link any unlinked predictions to actuals
+    const linked = await linkPredictionsToActuals(env.DB, routeId);
+
+    const accuracy = await getPredictionAccuracy(env.DB, routeId, trafficModel);
+
+    return new Response(
+      JSON.stringify(
+        {
+          route_id: routeId,
+          traffic_model: trafficModel,
+          predictions_linked: linked,
+          accuracy_data: accuracy,
+        },
+        null,
+        2
+      ),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: 'Failed to get prediction accuracy',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+}
+
+/**
+ * Handle /api/predictions/heatmap endpoint - get instant heatmap from predictions
+ */
+export async function handleApiPredictionsHeatmap(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const routeId = url.searchParams.get('routeId');
+  const trafficModel = (url.searchParams.get('model') || 'best_guess') as
+    | 'best_guess'
+    | 'pessimistic'
+    | 'optimistic';
+
+  if (!routeId) {
+    return new Response(JSON.stringify({ error: 'routeId parameter required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const { getPredictionHeatmap } = await import('./predictions');
+    const heatmap = await getPredictionHeatmap(env.DB, routeId, trafficModel);
+
+    return new Response(
+      JSON.stringify(
+        {
+          route_id: routeId,
+          traffic_model: trafficModel,
+          heatmap_data: heatmap,
+        },
+        null,
+        2
+      ),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: 'Failed to get prediction heatmap',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
 }

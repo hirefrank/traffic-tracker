@@ -170,7 +170,51 @@ export interface HealthResponse {
 export interface QueryFilters {
   startDate: string | null;
   endDate: string | null;
-  direction: Direction | null;
+  direction: Direction;  // Always set, defaults to 'outbound'
   routeId: string | null;
   excludeHolidays: boolean;
+}
+
+// Advanced analytics
+export interface StatisticalSummary {
+  direction: Direction;
+  sample_count: number;
+  mean_minutes: number;
+  median_minutes: number;
+  p75_minutes: number;
+  p90_minutes: number;
+  p95_minutes: number;
+  std_dev_minutes: number;
+  min_minutes: number;
+  max_minutes: number;
+  coefficient_of_variation: number;
+}
+
+export interface HourlyVariance {
+  hour: number;
+  direction: Direction;
+  avg_minutes: number;
+  std_dev_minutes: number;
+  coefficient_of_variation: number;
+  sample_count: number;
+}
+
+export interface PredictionAccuracy {
+  direction: Direction;
+  day_of_week: number;
+  hour_local: number;
+  prediction_count: number;
+  avg_predicted_minutes: number;
+  avg_actual_minutes: number;
+  avg_error_minutes: number;
+  avg_bias_minutes: number;
+  rmse_minutes: number;
+}
+
+export interface TrafficPattern {
+  pattern_type: 'very_fast' | 'fast' | 'moderate' | 'slow' | 'very_slow';
+  min_threshold_minutes: number;
+  max_threshold_minutes: number;
+  occurrence_count: number;
+  percentage: number;
 }
