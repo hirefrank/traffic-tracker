@@ -61,6 +61,21 @@ function isMonthFilter(filters: QueryFilters): boolean {
   return daysDiff >= 28 && daysDiff <= 32; // Allow 2 day tolerance for month variations
 }
 
+/**
+ * Check if manual filters are active (any date range or excludeHolidays)
+ * Returns true if user has set custom filters via the APPLY form
+ */
+function isManualFilter(filters: QueryFilters): boolean {
+  // Manual filters are active if:
+  // - Custom date range is set (but not a quick filter pattern)
+  // - excludeHolidays is checked
+  // Quick filters (week/month/weekdays) are NOT considered manual
+  if (isWeekFilter(filters) || isMonthFilter(filters) || filters.weekdaysOnly) {
+    return false;
+  }
+  return !!(filters.startDate || filters.endDate || filters.excludeHolidays);
+}
+
 export async function generateDashboard(
   env: Env,
   filters: QueryFilters,
@@ -598,7 +613,7 @@ export async function generateDashboard(
         </div>
         <div class="flex gap-2">
           <button type="submit"
-            class="brutal-btn brutal-btn-inactive bg-brutal-yellow px-6 py-2 text-sm">
+            class="brutal-btn brutal-btn-inactive px-6 py-2 text-sm ${isManualFilter(filters) ? 'bg-brutal-yellow' : 'bg-white'}">
             APPLY
           </button>
           <button type="button" onclick="resetFilters()"
@@ -1025,12 +1040,14 @@ export async function generateDashboard(
         params.set('startDate', weekAgo.toISOString().split('T')[0]);
         params.delete('endDate');
         params.delete('excludeHolidays');
+        params.delete('weekdaysOnly');
       } else if (type === 'month') {
         const monthAgo = new Date(now);
         monthAgo.setMonth(monthAgo.getMonth() - 1);
         params.set('startDate', monthAgo.toISOString().split('T')[0]);
         params.delete('endDate');
         params.delete('excludeHolidays');
+        params.delete('weekdaysOnly');
       } else if (type === 'weekdays') {
         params.delete('startDate');
         params.delete('endDate');
