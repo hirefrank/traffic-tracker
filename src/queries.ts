@@ -44,6 +44,10 @@ function buildWhereClause(filters: QueryFilters): {
     conditions.push("is_holiday = 0");
   }
 
+  if (filters.weekdaysOnly) {
+    conditions.push("day_of_week BETWEEN 1 AND 5");
+  }
+
   if (filters.routeId) {
     conditions.push("route_id = ?");
     bindings.push(filters.routeId);
@@ -278,6 +282,10 @@ export async function getRecentPairedMeasurements(
 
   if (filters.excludeHolidays) {
     conditions.push("is_holiday = 0");
+  }
+
+  if (filters.weekdaysOnly) {
+    conditions.push("day_of_week BETWEEN 1 AND 5");
   }
 
   if (filters.routeId) {
