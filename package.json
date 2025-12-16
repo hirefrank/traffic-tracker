@@ -5,6 +5,10 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
+    "css:build": "postcss ./src/styles/input.css -o ./src/styles/output.css --minify && node scripts/inline-css.js",
+    "css:watch": "postcss ./src/styles/input.css -o ./src/styles/output.css --watch",
+    "prebuild": "pnpm run css:build",
+    "predeploy": "pnpm run css:build",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create traffic-tracker",
@@ -14,8 +18,17 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",
+    "@csstools/postcss-media-queries-aspect-ratio-number-values": "^3.0.5",
     "@types/js-yaml": "^4.0.9",
+    "autoprefixer": "^10.4.23",
     "js-yaml": "^4.1.1",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "postcss-discard-comments": "^7.0.5",
+    "postcss-media-minmax": "^5.0.0",
+    "postcss-nested": "^7.0.2",
+    "postcss-nesting": "^13.0.2",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.7.2",
     "wrangler": "^4"
   }
