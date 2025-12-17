@@ -1312,7 +1312,6 @@ video{
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #000;
     }
 
     /* Brutalist Color Backgrounds */
