@@ -13,11 +13,16 @@ Traffic Tracker is a Cloudflare Worker that collects travel time estimates betwe
 pnpm run dev              # Start local dev server with wrangler
 
 # Deployment
-pnpm run deploy           # Deploy to Cloudflare Workers
+pnpm run deploy           # Deploy to Cloudflare Workers (auto-runs predeploy hook)
+
+# CSS Development
+pnpm run css:build        # Compile Tailwind CSS and inline into dashboard.ts
+pnpm run css:watch        # Watch CSS for changes during development
 
 # Database
 pnpm run db:create        # Create D1 database (first time only)
 pnpm run db:init          # Initialize schema on remote D1 (first time only)
+pnpm run db:migrate       # Run predictions migration (001-predictions.sql)
 
 # Routes Configuration
 pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
@@ -148,3 +153,22 @@ class="${isActive ? 'bg-brutal-yellow' : 'bg-white'}"
 - Manual filters (APPLY form) clear quick filters when used
 - Direction toggle preserves all other filters
 - Yellow background shows which filtering method is active
+
+## CSS Architecture
+
+The dashboard uses **compiled Tailwind CSS v3** (not CDN). The build process:
+
+1. **Source**: `src/styles/input.css` contains Tailwind directives
+2. **Compilation**: PostCSS compiles to `src/styles/output.css` (~23KB minified)
+3. **Inlining**: `scripts/inline-css.js` escapes backslashes and embeds CSS into `src/dashboard.ts`
+4. **Auto-build**: `predeploy` and `prebuild` hooks automatically run `css:build`
+
+**Critical**: CSS class names like `.md\:grid-cols-3` require proper escaping in JavaScript template literals. The inline script doubles backslashes (`\` → `\\`) to prevent Wrangler's bundler from stripping them.
+
+**Custom CSS Classes**: All `.brutal-*` classes are defined at the end of the `<style>` tag in `dashboard.ts` (after Tailwind utilities). The `.brutal-label` class does **not** hardcode `color` to allow Tailwind utilities (`text-white`, `text-black`) to override it.
+
+**To modify UI styles**:
+1. Edit Tailwind classes in `dashboard.ts` HTML, OR
+2. Edit custom `.brutal-*` CSS rules in `dashboard.ts` `<style>` section
+3. Run `pnpm run css:build` to rebuild and inline
+4. For live CSS development, use `pnpm run css:watch` in parallel with `pnpm run dev`
