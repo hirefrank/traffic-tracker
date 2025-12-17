@@ -8,6 +8,9 @@ dist/
 .wrangler/
 .dev.vars
 
+# Playwright debugging
+.playwright-mcp/
+
 # Environment files
 .env
 .env.local
