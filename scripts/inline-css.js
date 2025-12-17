@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 const dashboard = fs.readFileSync('src/dashboard.ts', 'utf8');
 const css = fs.readFileSync('src/styles/output.css', 'utf8');
