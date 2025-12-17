@@ -2307,14 +2307,14 @@ video{
       // Header row
       html += '<div class="brutal-label text-xs"></div>';
       for (const day of days) {
-        html += \`<div class="brutal-label text-xs text-center py-2 bg-black text-brutal-yellow border-2 border-black">\${dayNames[day]}</div>\`;
+        html += \`<div class="brutal-label text-xs text-center py-2 bg-black text-white border-2 border-black">\${dayNames[day]}</div>\`;
       }
 
       // Data rows
       for (const slot of timeSlots) {
         const hour = Math.floor(slot / 60);
         const minute = slot % 60;
-        html += \`<div class="brutal-label text-xs text-right pr-2 py-2 bg-black text-brutal-yellow border-2 border-black">\${formatTimeSlot(slot)}</div>\`;
+        html += \`<div class="brutal-label text-xs text-right pr-2 py-2 bg-black text-white border-2 border-black">\${formatTimeSlot(slot)}</div>\`;
         for (const day of days) {
           const item = data.find(d => d.day_of_week === day && d.hour === hour && d.minute === minute);
           if (item) {
