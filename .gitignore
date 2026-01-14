@@ -7,7 +7,7 @@ dist/
 # Wrangler
 .wrangler/
 .dev.vars
-wrangler.toml  # Contains deployment details, use wrangler.example.toml as template
+wrangler.toml
 
 # Playwright debugging
 .playwright-mcp/
@@ -19,7 +19,8 @@ wrangler.toml  # Contains deployment details, use wrangler.example.toml as templ
 
 # Routes config (contains addresses)
 routes.yaml
-routes.*.yaml  # Environment-specific route files (e.g., routes.user1.yaml, routes.user2.yaml)
+routes.darius.yaml
+routes.kate.yaml
 
 # IDE
 .idea/
