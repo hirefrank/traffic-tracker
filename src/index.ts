@@ -36,61 +36,62 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+    const base = env.BASE_PATH;
 
     try {
       // API routes
-      if (path === '/traffic/api/routes') {
+      if (path === `${base}/api/routes`) {
         return await handleApiRoutes(env);
       }
 
-      if (path === '/traffic/api/data') {
+      if (path === `${base}/api/data`) {
         return await handleApiData(request, env);
       }
 
-      if (path === '/traffic/api/export') {
+      if (path === `${base}/api/export`) {
         return await handleApiExport(request, env);
       }
 
-      if (path === '/traffic/api/health') {
+      if (path === `${base}/api/health`) {
         return await handleApiHealth(env);
       }
 
-      if (path === '/traffic/api/current') {
+      if (path === `${base}/api/current`) {
         const routeId = url.searchParams.get('routeId');
         return await handleApiCurrent(env, routeId);
       }
 
-      if (path === '/traffic/api/analytics') {
+      if (path === `${base}/api/analytics`) {
         return await handleApiAnalytics(request, env);
       }
 
-      if (path === '/traffic/api/predictions/generate') {
+      if (path === `${base}/api/predictions/generate`) {
         return await handleApiPredictionsGenerate(request, env);
       }
 
-      if (path === '/traffic/api/predictions/accuracy') {
+      if (path === `${base}/api/predictions/accuracy`) {
         return await handleApiPredictionsAccuracy(request, env);
       }
 
-      if (path === '/traffic/api/predictions/heatmap') {
+      if (path === `${base}/api/predictions/heatmap`) {
         return await handleApiPredictionsHeatmap(request, env);
       }
 
-      // Redirect root to /traffic (for workers.dev convenience)
+      // Redirect root to base path (for workers.dev convenience)
       if (path === '/' || path === '/index.html') {
-        return Response.redirect(`${url.origin}/traffic${url.search}`, 302);
+        return Response.redirect(`${url.origin}${base}${url.search}`, 302);
       }
 
       // Root redirect to first route
-      if (path === '/traffic' || path === '/traffic/' || path === '/traffic/index.html') {
+      if (path === base || path === `${base}/` || path === `${base}/index.html`) {
         const routes = parseRoutes(env.ROUTES);
         const defaultRoute = getDefaultRoute(routes);
-        return Response.redirect(`${url.origin}/traffic/route/${defaultRoute.id}${url.search}`, 302);
+        return Response.redirect(`${url.origin}${base}/route/${defaultRoute.id}${url.search}`, 302);
       }
 
       // Route-specific dashboard
-      if (path.startsWith('/traffic/route/')) {
-        const routeId = path.split('/')[3];
+      if (path.startsWith(`${base}/route/`)) {
+        const routeId = path.replace(`${base}/route/`, '').split('/')[0];
 
         if (!routeId) {
           return new Response('Route ID required', { status: 400 });

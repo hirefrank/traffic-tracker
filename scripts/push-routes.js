@@ -4,18 +4,27 @@
  * Push routes.yaml to Cloudflare Workers secrets
  *
  * Reads routes.yaml, validates, and pushes ORIGIN, ORIGIN_LABEL, and ROUTES secrets.
+ *
+ * Usage:
+ *   node scripts/push-routes.js                   # Push to default environment
+ *   ENV=user1 node scripts/push-routes.js         # Push to user1 environment
+ *   ENV=user2 node scripts/push-routes.js         # Push to user2 environment
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import yaml from 'js-yaml';
 
-const ROUTES_FILE = 'routes.yaml';
+// Support environment-specific routes files and wrangler environments
+const ENV = process.env.ENV;
+const ROUTES_FILE = ENV ? `routes.${ENV}.yaml` : 'routes.yaml';
+const WRANGLER_ENV_FLAG = ENV ? `--env ${ENV}` : '';
 
 function pushSecret(name, value) {
   try {
     // Use printf to handle special characters properly
-    execSync(`printf '%s' '${value.replace(/'/g, "'\\''")}' | wrangler secret put ${name}`, {
+    const cmd = `printf '%s' '${value.replace(/'/g, "'\\''")}' | wrangler secret put ${name} ${WRANGLER_ENV_FLAG}`.trim();
+    execSync(cmd, {
       stdio: ['pipe', 'inherit', 'inherit'],
     });
     return true;
@@ -71,7 +80,9 @@ function main() {
   }
 
   // Display what we're pushing
-  console.log('Configuration:');
+  console.log(`Environment: ${ENV || 'default'}`);
+  console.log(`Routes file: ${ROUTES_FILE}`);
+  console.log('\nConfiguration:');
   console.log(`  Origin: ${config.origin.address}`);
   if (config.origin.label) {
     console.log(`  Origin Label: ${config.origin.label}`);

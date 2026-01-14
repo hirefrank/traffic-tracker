@@ -4,6 +4,8 @@
 
 Traffic Tracker now includes advanced analytics and prediction features that answer the key question: **"Is collecting actual data worth it, or can we rely on Google's predictions?"**
 
+**Note on URLs:** All examples use `/traffic/api/*` as the base path. If you're using a different environment, replace `/traffic` with your environment's `BASE_PATH` (e.g., `/user1-traffic/api/*` or `/user2-traffic/api/*`).
+
 ## New Features
 
 ### 1. **Instant Heatmap Generation** 🚀
@@ -18,7 +20,7 @@ Generate a complete week's traffic heatmap for a **brand new route** without col
 **API Usage:**
 ```bash
 # Generate week of predictions for a new route
-curl -X GET "https://your-worker.workers.dev/api/predictions/generate?routeId=work&type=week" \
+curl -X GET "https://yourdomain.com/traffic/api/predictions/generate?routeId=work&type=week" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Response:
@@ -30,7 +32,7 @@ curl -X GET "https://your-worker.workers.dev/api/predictions/generate?routeId=wo
 }
 
 # View the instant heatmap
-curl "https://your-worker.workers.dev/api/predictions/heatmap?routeId=work&model=best_guess"
+curl "https://yourdomain.com/traffic/api/predictions/heatmap?routeId=work&model=best_guess"
 ```
 
 **Cost Analysis:**
@@ -51,7 +53,7 @@ Track how accurate Google's predictions are compared to reality.
 **API Usage:**
 ```bash
 # Get prediction accuracy for a route
-curl "https://your-worker.workers.dev/api/predictions/accuracy?routeId=work&model=best_guess" \
+curl "https://yourdomain.com/traffic/api/predictions/accuracy?routeId=work&model=best_guess" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Response includes:
@@ -88,7 +90,7 @@ Generate predictions with all three models to understand the range of possibilit
 
 ```bash
 # Generate daily predictions with all models (next 24 hours)
-curl -X GET "https://your-worker.workers.dev/api/predictions/generate?routeId=work&type=daily" \
+curl -X GET "https://yourdomain.com/traffic/api/predictions/generate?routeId=work&type=daily" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # This creates 24 hours × 2 directions × 3 models = 144 predictions
@@ -125,7 +127,7 @@ Deep dive into your actual traffic data with comprehensive statistics.
 
 **API Usage:**
 ```bash
-curl "https://your-worker.workers.dev/api/analytics?routeId=work&excludeHolidays=true" \
+curl "https://yourdomain.com/traffic/api/analytics?routeId=work&excludeHolidays=true" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Response:
@@ -198,10 +200,10 @@ Pre-calculated accuracy metrics joining predictions with actual trips.
 1. **Run Accuracy Analysis**
    ```bash
    # Generate predictions for the past week
-   curl -X GET "https://your-worker.workers.dev/api/predictions/generate?routeId=work&type=week"
+   curl -X GET "https://yourdomain.com/traffic/api/predictions/generate?routeId=work&type=week"
 
    # Compare to actual data
-   curl "https://your-worker.workers.dev/api/predictions/accuracy?routeId=work"
+   curl "https://yourdomain.com/traffic/api/predictions/accuracy?routeId=work"
    ```
 
 2. **Calculate ROI Metrics**
@@ -221,17 +223,17 @@ Pre-calculated accuracy metrics joining predictions with actual trips.
 
 ```bash
 # Step 1: Generate instant heatmap
-curl -X GET "https://your-worker.workers.dev/api/predictions/generate?routeId=new-gym&type=week" \
+curl -X GET "https://yourdomain.com/traffic/api/predictions/generate?routeId=new-gym&type=week" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Step 2: View predictions immediately
-curl "https://your-worker.workers.dev/api/predictions/heatmap?routeId=new-gym"
+curl "https://yourdomain.com/traffic/api/predictions/heatmap?routeId=new-gym"
 
 # Step 3: Enable actual collection in routes.yaml
 # Set active: true for the route
 
 # Step 4: After 1-2 weeks, check accuracy
-curl "https://your-worker.workers.dev/api/predictions/accuracy?routeId=new-gym" \
+curl "https://yourdomain.com/traffic/api/predictions/accuracy?routeId=new-gym" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Step 5: Decide whether to continue collection
@@ -241,7 +243,7 @@ curl "https://your-worker.workers.dev/api/predictions/accuracy?routeId=new-gym" 
 
 ```bash
 # Get comprehensive analytics
-curl "https://your-worker.workers.dev/api/analytics?routeId=work&startDate=2025-12-01" \
+curl "https://yourdomain.com/traffic/api/analytics?routeId=work&startDate=2025-12-01" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Check if patterns are stable or changing

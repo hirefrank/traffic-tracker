@@ -1,0 +1,69 @@
+# =============================================================================
+# Traffic Tracker - Multi-environment Configuration
+# =============================================================================
+# Copy this file to wrangler.toml and customize with your values
+#
+# Deploy commands:
+#   Default: pnpm run deploy
+#   User 1:  pnpm run deploy:user1
+#   User 2:  pnpm run deploy:user2
+# =============================================================================
+
+name = "traffic-tracker"
+main = "src/index.ts"
+compatibility_date = "2025-09-15"
+# account_id = "your-account-id-here"  # Optional: Defaults to your account
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+# =============================================================================
+# Default Environment
+# =============================================================================
+[[routes]]
+pattern = "yourdomain.com/traffic*"
+zone_name = "yourdomain.com"
+
+[[routes]]
+pattern = "www.yourdomain.com/traffic*"
+zone_name = "yourdomain.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "traffic-tracker"
+database_id = "your-database-id-from-wrangler-d1-create"
+
+[vars]
+START_HOUR = "6"
+END_HOUR = "20"  # 6am-8pm = 14 hours (keeps 3 routes in free tier)
+TIMEZONE = "America/New_York"
+BASE_PATH = "/traffic"
+
+# =============================================================================
+# Additional Environment Example (Optional)
+# =============================================================================
+# Uncomment and customize to add more environments for other users
+#
+# [env.user1]
+# name = "user1-traffic-tracker"
+# workers_dev = true
+# routes = [
+#   { pattern = "yourdomain.com/user1-traffic*", zone_name = "yourdomain.com" },
+#   { pattern = "www.yourdomain.com/user1-traffic*", zone_name = "yourdomain.com" }
+# ]
+#
+# [[env.user1.d1_databases]]
+# binding = "DB"
+# database_name = "user1-traffic-tracker"
+# database_id = "user1-database-id-from-wrangler-d1-create"
+#
+# [env.user1.vars]
+# START_HOUR = "6"
+# END_HOUR = "20"  # 6am-8pm = 14 hours (keeps 3 routes in free tier)
+# TIMEZONE = "America/Los_Angeles"
+# BASE_PATH = "/user1-traffic"

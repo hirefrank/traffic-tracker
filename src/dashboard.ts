@@ -82,6 +82,9 @@ export async function generateDashboard(
   currentRoute: Route,
   allRoutes: Route[]
 ): Promise<string> {
+  // Get base path for URLs
+  const basePath = env.BASE_PATH;
+
   // Get labels from route config
   const originLabel = env.ORIGIN_LABEL || 'Origin';
   const destLabel = currentRoute.label;
@@ -1439,7 +1442,7 @@ video{
         <div class="flex items-center justify-between gap-1.5 text-xs">
           <!-- Left: Route (compact) -->
           ${allRoutes.length > 1 ? `
-          <select id="routeSelect" onchange="window.location.href='/traffic/route/' + this.value + window.location.search"
+          <select id="routeSelect" onchange="window.location.href='${basePath}/route/' + this.value + window.location.search"
             class="brutal-toolbar-select text-xs px-1 py-0.5 min-w-0">
             ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label.toUpperCase()}</option>`).join('')}
           </select>
@@ -1479,12 +1482,11 @@ video{
           <span class="text-lg font-bold tracking-wider">▓ TRAFFIC</span>
           <span class="text-brutal-yellow">│</span>
           ${allRoutes.length > 1 ? `
-          <select id="routeSelect" onchange="window.location.href='/traffic/route/' + this.value + window.location.search"
+          <select id="routeSelect" onchange="window.location.href='${basePath}/route/' + this.value + window.location.search"
             class="brutal-toolbar-select">
             ${allRoutes.map(r => `<option value="${r.id}" ${r.id === currentRoute.id ? 'selected' : ''}>${r.label.toUpperCase()}${r.active === false ? ' [ARCHIVED]' : ''}</option>`).join('')}
           </select>
           ` : `<span class="font-bold">${destLabel.toUpperCase()}</span>`}
-          ${!isActiveRoute ? `<span class="text-brutal-red font-bold text-sm">[ARCHIVED]</span>` : ''}
         </div>
 
         <!-- Center: Direction Controls -->
@@ -1789,7 +1791,7 @@ video{
     function setGlobalDirection(direction) {
       const params = new URLSearchParams(window.location.search);
       params.set('direction', direction);
-      window.location.href = '/traffic/route/' + routeId + '?' + params.toString();
+      window.location.href = '${basePath}/route/' + routeId + '?' + params.toString();
     }
 
     // Initialize interval chart - BRUTALIST STYLE
@@ -1912,7 +1914,7 @@ video{
       }
 
       try {
-        const res = await fetch('/traffic/api/current?routeId=' + routeId);
+        const res = await fetch('${basePath}/api/current?routeId=' + routeId);
         const data = await res.json();
 
         if (data.error) {
@@ -1967,11 +1969,11 @@ video{
       if (direction) params.set('direction', direction);
       if (excludeHolidays) params.set('excludeHolidays', 'true');
 
-      window.location.href = '/traffic/route/' + routeId + '?' + params.toString();
+      window.location.href = '${basePath}/route/' + routeId + '?' + params.toString();
     }
 
     function resetFilters() {
-      window.location.href = '/traffic/route/' + routeId;
+      window.location.href = '${basePath}/route/' + routeId;
     }
 
     function setQuickFilter(type) {
@@ -1999,7 +2001,7 @@ video{
         params.set('weekdaysOnly', 'true');
       }
 
-      window.location.href = '/traffic/route/' + routeId + '?' + params.toString();
+      window.location.href = '${basePath}/route/' + routeId + '?' + params.toString();
     }
 
     function formatRelativeTime(isoString) {
@@ -2050,7 +2052,7 @@ video{
       try {
         const params = new URLSearchParams(window.location.search);
         params.set('routeId', routeId);
-        const url = '/traffic/api/analytics?' + params.toString();
+        const url = '${basePath}/api/analytics?' + params.toString();
         console.log('Fetching analytics from:', url);
         const res = await fetch(url);
 
@@ -2240,7 +2242,7 @@ video{
         // Switching to predictions
         if (!predictionData) {
           try {
-            const res = await fetch('/traffic/api/predictions/heatmap?routeId=' + routeId + '&model=best_guess');
+            const res = await fetch('${basePath}/api/predictions/heatmap?routeId=' + routeId + '&model=best_guess');
             const data = await res.json();
             predictionData = data.heatmap_data;
           } catch (error) {

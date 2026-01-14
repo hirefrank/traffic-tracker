@@ -8,6 +8,7 @@ export interface Env {
   START_HOUR: string;
   END_HOUR: string;
   TIMEZONE: string;
+  BASE_PATH: string;  // URL base path (e.g., "/traffic", "/user1-traffic")
   // Optional labels for UI (defaults to "Origin" if not set)
   ORIGIN_LABEL?: string;
 }

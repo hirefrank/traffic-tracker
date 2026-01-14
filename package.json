@@ -11,10 +11,17 @@
     "predeploy": "pnpm run css:build",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "deploy:darius": "wrangler deploy --env darius",
+    "deploy:kate": "wrangler deploy --env kate",
     "db:create": "wrangler d1 create traffic-tracker",
     "db:init": "wrangler d1 execute traffic-tracker --remote --file=migrations/000-initial.sql",
     "db:migrate": "wrangler d1 execute traffic-tracker --remote --file=migrations/001-predictions.sql",
-    "routes:push": "node scripts/push-routes.js"
+    "db:create:kate": "wrangler d1 create kate-traffic-tracker",
+    "db:init:kate": "wrangler d1 execute kate-traffic-tracker --remote --file=migrations/000-initial.sql",
+    "db:migrate:kate": "wrangler d1 execute kate-traffic-tracker --remote --file=migrations/001-predictions.sql",
+    "routes:push": "node scripts/push-routes.js",
+    "routes:push:darius": "ENV=darius node scripts/push-routes.js",
+    "routes:push:kate": "ENV=kate node scripts/push-routes.js"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",

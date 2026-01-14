@@ -13,19 +13,28 @@ Traffic Tracker is a Cloudflare Worker that collects travel time estimates betwe
 pnpm run dev              # Start local dev server with wrangler
 
 # Deployment
-pnpm run deploy           # Deploy to Cloudflare Workers (auto-runs predeploy hook)
+pnpm run deploy           # Deploy default environment (auto-runs predeploy hook)
+pnpm run deploy:user1     # Deploy user1 environment
+pnpm run deploy:user2     # Deploy user2 environment
 
 # CSS Development
 pnpm run css:build        # Compile Tailwind CSS and inline into dashboard.ts
 pnpm run css:watch        # Watch CSS for changes during development
 
-# Database
+# Database (default environment)
 pnpm run db:create        # Create D1 database (first time only)
 pnpm run db:init          # Initialize schema on remote D1 (first time only)
 pnpm run db:migrate       # Run predictions migration (001-predictions.sql)
 
+# Database (per-environment example)
+pnpm run db:create:user1   # Create user1's D1 database
+pnpm run db:init:user1     # Initialize user1's schema
+pnpm run db:migrate:user1  # Run user1's migrations
+
 # Routes Configuration
-pnpm run routes:push      # Push routes.yaml to Cloudflare secrets
+pnpm run routes:push        # Push routes.yaml to default environment
+pnpm run routes:push:user1  # Push routes.user1.yaml to user1 environment
+pnpm run routes:push:user2  # Push routes.user2.yaml to user2 environment
 ```
 
 ## Architecture
@@ -63,11 +72,75 @@ See [ANALYTICS.md](ANALYTICS.md) for comprehensive documentation on:
 - **Traffic Model Variations** - Optimistic/pessimistic bounds for confidence intervals
 - **Cost Optimization** - Determine if actual collection is worth it vs using predictions
 
+## Multi-Environment Setup
+
+This codebase supports **multiple independent deployments** from a single repository using Wrangler environments. Each environment has its own:
+- Worker deployment
+- D1 database
+- Routes configuration
+- Secrets (API keys, routes)
+- URL base path
+- Timezone settings
+
+**Example environments:**
+- **Default** - `/traffic` base path
+- **User 1** - `/user1-traffic` base path (custom timezone)
+- **User 2** - `/user2-traffic` base path (custom timezone)
+
+All environments share the same codebase and cron schedule (every 15 minutes).
+
+### Adding a New Environment
+
+To add a new person/deployment:
+
+1. **Add environment to `wrangler.toml`:**
+```toml
+[env.alice]
+name = "alice-traffic-tracker"
+workers_dev = true
+routes = [
+  { pattern = "yourdomain.com/alice-traffic*", zone_name = "yourdomain.com" }
+]
+
+[[env.alice.d1_databases]]
+binding = "DB"
+database_name = "alice-traffic-tracker"
+database_id = "TBD-create-database-first"
+
+[env.alice.vars]
+START_HOUR = "6"
+END_HOUR = "21"
+TIMEZONE = "America/Chicago"
+BASE_PATH = "/alice-traffic"
+```
+
+2. **Create routes file** (`routes.alice.yaml`)
+
+3. **Add npm scripts** to `package.json`:
+```json
+"deploy:alice": "wrangler deploy --env alice",
+"routes:push:alice": "ENV=alice node scripts/push-routes.js"
+```
+
+4. **Create D1 database** and update `wrangler.toml` with the ID
+
+5. **Set secrets:**
+```bash
+wrangler secret put GOOGLE_MAPS_API_KEY --env alice
+wrangler secret put API_ACCESS_KEY --env alice
+pnpm run routes:push:alice
+```
+
+6. **Deploy:**
+```bash
+pnpm run deploy:alice
+```
+
 ## Environment Configuration
 
 ### Routes Configuration (routes.yaml)
 
-All location configuration is managed via `routes.yaml`. Copy from `routes.example.yaml` and customize:
+All location configuration is managed via `routes.yaml` (or environment-specific files like `routes.user1.yaml`). Copy from `routes.example.yaml` and customize:
 
 ```yaml
 # Your starting point
@@ -103,14 +176,23 @@ Set manually via `wrangler secret put`:
 
 ### URL Structure
 
-- `/` - Redirects to the first route's dashboard
-- `/route/{id}` - Dashboard for a specific route (e.g., `/route/work`)
-- `/api/routes` - Returns list of configured routes (public)
+Each environment has its own base path defined by `BASE_PATH` variable:
+
+**Default environment:**
+- `/traffic` - Redirects to the first route's dashboard
+- `/traffic/route/{id}` - Dashboard for a specific route (e.g., `/traffic/route/work`)
+- `/traffic/api/routes` - Returns list of configured routes (public)
+
+**Other environments follow the same pattern:**
+- `/{BASE_PATH}` - Redirects to the first route
+- `/{BASE_PATH}/route/{id}` - Dashboard for specific route
+- `/{BASE_PATH}/api/*` - API endpoints for that environment
 
 ### Variables (in wrangler.toml)
 
 - `START_HOUR` / `END_HOUR` - Collection window (local time)
-- `TIMEZONE` - Default: America/New_York
+- `TIMEZONE` - Timezone for the environment (e.g., America/New_York, America/Los_Angeles, America/Chicago)
+- `BASE_PATH` - URL base path for routing (e.g., "/traffic", "/user1-traffic", "/user2-traffic")
 
 ## UI Design System (Brutalist)
 
