@@ -101,6 +101,11 @@ Edit `wrangler.toml` and update:
 - Domain routes (if using custom domain)
 - Timezone and collection hours
 
+Config hygiene:
+- Keep `wrangler.toml` local-only (it is gitignored)
+- Optional: use `wrangler.local.toml` for personal overrides (also gitignored)
+- Keep secrets in Wrangler secrets (`wrangler secret put ...`), not TOML
+
 ### 3. Create the D1 database
 
 ```bash
