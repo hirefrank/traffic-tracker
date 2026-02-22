@@ -20,9 +20,9 @@
     "db:create:kate": "wrangler d1 create kate-traffic-tracker",
     "db:init:kate": "wrangler d1 execute kate-traffic-tracker --remote --file=migrations/000-initial.sql",
     "db:migrate:kate": "wrangler d1 execute kate-traffic-tracker --remote --file=migrations/001-predictions.sql",
-    "routes:push": "node scripts/push-routes.js",
-    "routes:push:darius": "ENV=darius node scripts/push-routes.js",
-    "routes:push:kate": "ENV=kate node scripts/push-routes.js"
+    "routes:push": "ROUTES_ENV=frank WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js",
+    "routes:push:darius": "ENV=darius WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js",
+    "routes:push:kate": "ENV=kate WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",

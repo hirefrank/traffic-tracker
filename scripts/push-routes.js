@@ -17,13 +17,16 @@ import yaml from 'js-yaml';
 
 // Support environment-specific routes files and wrangler environments
 const ENV = process.env.ENV;
-const ROUTES_FILE = ENV ? `routes.${ENV}.yaml` : 'routes.yaml';
+const ROUTES_ENV = process.env.ROUTES_ENV || ENV;
+const WRANGLER_CONFIG = process.env.WRANGLER_CONFIG;
+const ROUTES_FILE = ROUTES_ENV ? `routes.${ROUTES_ENV}.yaml` : 'routes.yaml';
+const WRANGLER_CONFIG_FLAG = WRANGLER_CONFIG ? `-c ${WRANGLER_CONFIG}` : '';
 const WRANGLER_ENV_FLAG = ENV ? `--env ${ENV}` : '';
 
 function pushSecret(name, value) {
   try {
     // Use printf to handle special characters properly
-    const cmd = `printf '%s' '${value.replace(/'/g, "'\\''")}' | wrangler secret put ${name} ${WRANGLER_ENV_FLAG}`.trim();
+    const cmd = `printf '%s' '${value.replace(/'/g, "'\\''")}' | wrangler secret put ${name} ${WRANGLER_CONFIG_FLAG} ${WRANGLER_ENV_FLAG}`.trim();
     execSync(cmd, {
       stdio: ['pipe', 'inherit', 'inherit'],
     });
