@@ -4,6 +4,8 @@ A Cloudflare Worker that collects travel time estimates between two locations us
 
 **[View live demo →](https://hirefrank.com/traffic)**
 
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hirefrank/traffic-tracker)
+
 ## Features
 
 - Collects travel time data for both directions every 15 minutes

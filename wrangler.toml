@@ -1,0 +1,47 @@
+# =============================================================================
+# Traffic Tracker - Wrangler Configuration
+# =============================================================================
+# Deploy your own instance:
+#   1. Click "Deploy to Cloudflare" in the README
+#   2. Create a D1 database: wrangler d1 create traffic-tracker
+#   3. Update database_id below with the ID from step 2
+#   4. Set secrets: GOOGLE_MAPS_API_KEY, API_ACCESS_KEY
+#   5. Push your routes config: pnpm run routes:push
+#
+# For personal overrides (multi-env, custom domains), copy to wrangler.local.toml
+# and run deploy scripts with --config wrangler.local.toml
+# =============================================================================
+
+name = "traffic-tracker"
+main = "src/index.ts"
+compatibility_date = "2025-09-15"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+# =============================================================================
+# Routes (optional - remove if using workers.dev subdomain only)
+# =============================================================================
+# [[routes]]
+# pattern = "yourdomain.com/traffic*"
+# zone_name = "yourdomain.com"
+#
+# [[routes]]
+# pattern = "www.yourdomain.com/traffic*"
+# zone_name = "yourdomain.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "traffic-tracker"
+database_id = "your-database-id-from-wrangler-d1-create"
+
+[vars]
+START_HOUR = "6"
+END_HOUR = "20"
+TIMEZONE = "America/New_York"
+BASE_PATH = "/traffic"
