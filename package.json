@@ -11,18 +11,10 @@
     "predeploy": "pnpm run css:build",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "deploy:darius": "wrangler deploy -c wrangler.local.toml --env darius",
-    "deploy:kate": "wrangler deploy -c wrangler.local.toml --env kate",
-    "deploy:local": "wrangler deploy -c wrangler.local.toml",
     "db:create": "wrangler d1 create traffic-tracker",
     "db:init": "wrangler d1 execute traffic-tracker --remote --file=migrations/000-initial.sql",
     "db:migrate": "wrangler d1 execute traffic-tracker --remote --file=migrations/001-predictions.sql",
-    "db:create:kate": "wrangler d1 create kate-traffic-tracker",
-    "db:init:kate": "wrangler d1 execute kate-traffic-tracker --remote --file=migrations/000-initial.sql",
-    "db:migrate:kate": "wrangler d1 execute kate-traffic-tracker --remote --file=migrations/001-predictions.sql",
-    "routes:push": "ROUTES_ENV=frank WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js",
-    "routes:push:darius": "ENV=darius WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js",
-    "routes:push:kate": "ENV=kate WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js"
+    "routes:push": "node scripts/push-routes.js"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",
