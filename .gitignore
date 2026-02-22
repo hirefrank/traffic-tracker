@@ -8,7 +8,6 @@ dist/
 .wrangler/
 .dev.vars
 wrangler.local.toml
-package.local.json
 
 # Playwright debugging
 .playwright-mcp/
