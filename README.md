@@ -92,21 +92,12 @@ pnpm install
 
 ### 2. Configure wrangler
 
-Copy the example configuration and customize it:
-
-```bash
-cp wrangler.example.toml wrangler.toml
-```
-
-Edit `wrangler.toml` and update:
-- `account_id` (optional, defaults to your account)
-- Domain routes (if using custom domain)
+Edit `wrangler.toml` (included with placeholder values) and update:
+- `database_id` (after creating the D1 database in step 3)
+- Domain routes (uncomment and customize if using a custom domain)
 - Timezone and collection hours
 
-Config hygiene:
-- Keep `wrangler.toml` local-only (it is gitignored)
-- Optional: use `wrangler.local.toml` for personal overrides (also gitignored)
-- Keep secrets in Wrangler secrets (`wrangler secret put ...`), not TOML
+For personal overrides (account ID, custom domains, multi-environment), copy to `wrangler.local.toml` (gitignored) and deploy with `wrangler deploy -c wrangler.local.toml`.
 
 ### 3. Create the D1 database
 
@@ -114,7 +105,7 @@ Config hygiene:
 npx wrangler d1 create traffic-tracker
 ```
 
-Copy the `database_id` from the output and update it in `wrangler.toml`.
+Copy the `database_id` from the output and update it in your `wrangler.toml`.
 
 ### 4. Initialize the database
 
@@ -135,13 +126,7 @@ npx wrangler secret put API_ACCESS_KEY
 
 ### 5. Configure routes
 
-Copy the example routes file and customize:
-
-```bash
-cp routes.example.yaml routes.yaml
-```
-
-Edit `routes.yaml` with your locations:
+Edit `routes.yaml` (included with example locations) with your real addresses:
 
 ```yaml
 origin:
@@ -313,7 +298,7 @@ All environments share:
 
 **Example:** Adding a deployment for "Alice"
 
-1. **Add environment to `wrangler.toml`:**
+1. **Add environment to `wrangler.local.toml`** (copy from `wrangler.toml` if you haven't already):
 
 ```toml
 [env.alice]
@@ -335,31 +320,17 @@ TIMEZONE = "America/Chicago"
 BASE_PATH = "/alice-traffic"
 ```
 
-2. **Add deployment scripts to `package.json`:**
-
-```json
-{
-  "scripts": {
-    "deploy:alice": "wrangler deploy --env alice",
-    "db:create:alice": "wrangler d1 create alice-traffic-tracker",
-    "db:init:alice": "wrangler d1 execute alice-traffic-tracker --remote --file=migrations/000-initial.sql",
-    "db:migrate:alice": "wrangler d1 execute alice-traffic-tracker --remote --file=migrations/001-predictions.sql",
-    "routes:push:alice": "ENV=alice node scripts/push-routes.js"
-  }
-}
-```
-
-3. **Create D1 database and initialize:**
+2. **Create D1 database and initialize:**
 
 ```bash
-pnpm run db:create:alice
-# Copy the database_id from output and update wrangler.toml
+wrangler d1 create alice-traffic-tracker
+# Copy the database_id from output and update wrangler.local.toml
 
-pnpm run db:init:alice
-pnpm run db:migrate:alice
+wrangler d1 execute alice-traffic-tracker --remote --file=migrations/000-initial.sql
+wrangler d1 execute alice-traffic-tracker --remote --file=migrations/001-predictions.sql
 ```
 
-4. **Create routes configuration:**
+3. **Create routes configuration:**
 
 Create `routes.alice.yaml`:
 
@@ -375,36 +346,31 @@ routes:
     active: true
 ```
 
-5. **Set secrets:**
+4. **Set secrets and push routes:**
 
 ```bash
-# Use the same Google Maps API key (can be shared)
 wrangler secret put GOOGLE_MAPS_API_KEY --env alice
-
-# Generate a new API access key for Alice
 openssl rand -base64 32 | wrangler secret put API_ACCESS_KEY --env alice
-
-# Push routes configuration
-pnpm run routes:push:alice
+ENV=alice WRANGLER_CONFIG=wrangler.local.toml node scripts/push-routes.js
 ```
 
-6. **Deploy:**
+5. **Deploy:**
 
 ```bash
-pnpm run deploy:alice
+wrangler deploy -c wrangler.local.toml --env alice
 ```
 
 Alice's deployment will be accessible at `yourdomain.com/alice-traffic`.
 
 ## Deploying Your Own Instance
 
-If you fork this repo to track your own route, follow the setup steps above. The key files to customize:
+Fork this repo and follow the setup steps above. The key files to customize:
 
-1. **`wrangler.toml`** - Copy from `wrangler.example.toml` and update with your database ID and domain
-2. **`routes.yaml`** - Copy from `routes.example.yaml` and add your addresses
+1. **`wrangler.toml`** - Update the `database_id` and optionally uncomment domain routes
+2. **`routes.yaml`** - Replace example addresses with your real locations
 3. **Secrets** - Set `GOOGLE_MAPS_API_KEY` and `API_ACCESS_KEY` via `wrangler secret put`
 
-All deployment-specific configuration is gitignored, so your personal data stays private.
+For multi-environment setups (multiple users from one repo), copy `wrangler.toml` to `wrangler.local.toml` (gitignored) and add environment blocks there.
 
 ## License
 
